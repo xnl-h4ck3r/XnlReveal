@@ -1,4 +1,4 @@
-<center><img src="https://github.com/xnl-h4ck3r/XnlReveal/blob/main/XnlReveal/images/title.png"></center>
+<center><img src="https://github.com/xnl-h4ck3r/XnlReveal/blob/main/images/title.png"></center>
 
 ## About
 
@@ -33,7 +33,7 @@ The second and third points were inspired by this [Tweet by Critical Thinking - 
 
 If you right click the `Xnl Reveal` logo in the toolbar and select **Options**, you will be taken to the Options page.
 
-<center><img src="https://github.com/xnl-h4ck3r/XnlReveal/blob/main/XnlReveal/images/options.png"></center>
+<center><img src="https://github.com/xnl-h4ck3r/XnlReveal/blob/main/images/options.png"></center>
 
 You have the following options:
 
@@ -46,7 +46,7 @@ You have the following options:
 
 If you click the `Xnl Reveal` logo in the toolbar, you will see a popup menu.
 
-<center><img src="https://github.com/xnl-h4ck3r/XnlReveal/blob/main/XnlReveal/images/popup.png"></center>
+<center><img src="https://github.com/xnl-h4ck3r/XnlReveal/blob/main/images/popup.png"></center>
 
 You have the following settings:
 
