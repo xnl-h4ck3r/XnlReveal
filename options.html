@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Xnl Reveal</title>
+  <style>
+    .container {
+      margin: 20px;
+    }
+
+    .message {
+      text-align: left;
+      margin-top: 10px;
+      color: blue;
+    }
+
+    .input-container {
+      display: flex;
+      align-items: center;
+      margin: 5px 0;
+    }
+
+    label, input, button {
+      margin-right: 10px;
+    }
+
+    img {
+      width: 160px;
+      max-height: 160px;
+    }
+    
+    td {
+      padding: 15px;
+      vertical-align: middle;
+    }
+
+    .button-container {
+      display: flex;
+      align-items: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <table>
+      <tr>
+        <td width="130px">
+          <img src="images/icon.png" alt="Extension Icon">
+        </td>
+        <td>
+          <h2>XNL Reveal</h2>
+          <div class="input-container">
+            <label for="canaryTokenInput">Canary token:</label>
+            <input type="text" id="canaryTokenInput">
+          </div>
+          <div class="input-container">
+            <label for="checkDelayInput">Check delay:</label>
+            <input type="text" id="checkDelayInput"  maxlength="2" size="1" pattern="[0-9]">
+            <label for="seconds">seconds</label>
+          </div>
+          <div class="button-container">
+            <button id="saveButton">Save</button>
+            <button id="clearStorageButton">Clear Saved URLs/Params</button>
+          </div>
+          <div class="message" id="clearStorageMessage" style="height: 40px;"></div>
+        </td>
+      </tr>
+    </table>
+  </div>
+</body>
+<script src="options.js"></script>
+</html>
