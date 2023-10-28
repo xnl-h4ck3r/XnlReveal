@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>XNL Reveal Options</title>
+  <style>
+    body {
+      width: 290px;
+    }
+
+    .checkbox-container {
+      display: flex;
+      align-items: center;
+    }
+
+    .checkbox-container label {
+      margin-left: 20px; /* Add left margin for indentation */
+    }
+
+    .indented-checkboxes {
+      margin-left: 20px; /* Add left margin to indent all checkboxes below enableExtension */
+    }
+  </style>
+</head>
+<body>
+  <h3>Xnl Reveal</h3>
+  <div class="checkbox-container">
+    <input type="checkbox" id="enableExtension">
+    <label for="enableExtension" style="margin-left: 10px;">ENABLE REVEAL</label>
+  </div>
+  <div class="indented-checkboxes">
+    <div class="checkbox-container">
+      <input type="checkbox" id="enableAlerts">
+      <label for="enableAlerts" style="margin-left: 10px;">Show query param reflection alerts</label>
+    </div>
+    <div class="checkbox-container" style="margin-top: 5px;">
+      <input type="checkbox" id="enableHidden">
+      <label for="enableHidden" style="margin-left: 10px;"">Show hidden elements&nbsp;&nbsp;</label>
+      <button id="enableHiddenButton">Run Now</button>
+    </div>
+    <div class="checkbox-container">
+      <input type="checkbox" id="enableDisabled" style="margin-top: 10px;">
+      <label for="enableDisabled" style="margin-left: 10px;">Enable disabled elements&nbsp;&nbsp;</label>
+      <button id="enableDisabledButton">Run Now</button>
+    </div>
+  </div>
+</body>
+<script src="popup.js"></script>
+</html>
