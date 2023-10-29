@@ -1,5 +1,6 @@
 const canaryTokenInput = document.getElementById("canaryTokenInput");
 const checkDelayInput = document.getElementById("checkDelayInput");
+const waybackJSOnlyInput = document.getElementById("waybackJSOnlyInput");
 const saveCanaryTokenButton = document.getElementById("saveButton");
 const clearStorageButton = document.getElementById("clearStorageButton");
 const clearStorageMessage = document.getElementById("clearStorageMessage");
@@ -20,6 +21,10 @@ chrome.storage.sync.get(["canaryToken"], (result) => {
 chrome.storage.sync.get(["checkDelay"], (result) => {
   checkDelayInput.value = result.checkDelay || "2";
 });
+chrome.storage.sync.get(["waybackJSOnly"], (result) => {
+  waybackJSOnlyInput.checked =
+    result.waybackJSOnly === undefined ? false : result.waybackJSOnly;
+});
 
 // Function to display a message
 function showMessage(message) {
@@ -35,6 +40,7 @@ saveButton.addEventListener("click", (e) => {
 
   let canaryToken = canaryTokenInput.value;
   const checkDelay = checkDelayInput.value;
+  const waybackJSOnly = waybackJSOnlyInput.checked;
 
   // Check if canaryToken is blank and reset it to "xnlreveal"
   if (!canaryToken) {
@@ -44,6 +50,7 @@ saveButton.addEventListener("click", (e) => {
 
   chrome.storage.sync.set({ canaryToken });
   chrome.storage.sync.set({ checkDelay });
+  chrome.storage.sync.set({ waybackJSOnly });
 
   showMessage("Options successfully saved!");
 });

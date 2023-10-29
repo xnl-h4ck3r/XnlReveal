@@ -2,7 +2,10 @@
     "manifest_version": 3,
     "name": "Xnl Reveal",
     "description": "Show alerts for reflected query params;  Show hidden elements;  Enable disabled elements.  See https://github.com/xnl-h4ck3r/XnlReveal for more details.",
-    "version": "0.1",
+    "version": "0.2",
+    "background": {
+        "service_worker": "background.js"
+    },
     "permissions": [
         "storage",
         "declarativeContent",
@@ -32,5 +35,10 @@
         "16": "images/icon.png",
         "48": "images/icon.png",
         "128": "images/icon.png"
+    },
+    "externally_connectable": {
+        "matches": [
+            "<all_urls>"
+        ]
     }
 }

@@ -1,5 +1,6 @@
 const enableExtensionCheckbox = document.getElementById("enableExtension");
 const enableAlertsCheckbox = document.getElementById("enableAlerts");
+const enableWaybackCheckbox = document.getElementById("enableWayback");
 const enableHiddenCheckbox = document.getElementById("enableHidden");
 const enableHiddenButton = document.getElementById("enableHiddenButton");
 const enableDisabledCheckbox = document.getElementById("enableDisabled");
@@ -12,6 +13,7 @@ chrome.storage.sync.get(["extensionEnabled"], (result) => {
 
   // Disable the options checkbox if extensionEnabled is false
   enableAlertsCheckbox.disabled = !extensionEnabled;
+  enableWaybackCheckbox.disabled = !extensionEnabled;
   enableHiddenCheckbox.disabled = !extensionEnabled;
   enableDisabledCheckbox.disabled = !extensionEnabled;
   enableHiddenButton.disabled = !extensionEnabled;
@@ -20,6 +22,10 @@ chrome.storage.sync.get(["extensionEnabled"], (result) => {
 chrome.storage.sync.get(["alertsEnabled"], (result) => {
   const alertsEnabled = result.alertsEnabled || false;
   enableAlertsCheckbox.checked = alertsEnabled;
+});
+chrome.storage.sync.get(["waybackEnabled"], (result) => {
+  const waybackEnabled = result.waybackEnabled || false;
+  enableWaybackCheckbox.checked = waybackEnabled;
 });
 chrome.storage.sync.get(["hiddenEnabled"], (result) => {
   const hiddenEnabled = result.hiddenEnabled || false;
@@ -34,6 +40,13 @@ chrome.storage.sync.get(["disabledEnabled"], (result) => {
 enableAlertsCheckbox.addEventListener("change", () => {
   const alertsEnabled = enableAlertsCheckbox.checked;
   const setting = { ["alertsEnabled"]: alertsEnabled };
+  chrome.storage.sync.set(setting);
+});
+
+// Toggle the extension's show wayback state when the checkbox is changed
+enableWaybackCheckbox.addEventListener("change", () => {
+  const waybackEnabled = enableWaybackCheckbox.checked;
+  const setting = { ["waybackEnabled"]: waybackEnabled };
   chrome.storage.sync.set(setting);
 });
 
@@ -73,17 +86,24 @@ enableExtensionCheckbox.addEventListener("change", () => {
 
   // Disable the other options if extensionEnabled is false
   enableAlertsCheckbox.disabled = !extensionEnabled;
+  enableWaybackCheckbox.disabled = !extensionEnabled;
   enableHiddenCheckbox.disabled = !extensionEnabled;
   enableDisabledCheckbox.disabled = !extensionEnabled;
   enableHiddenButton.disabled = !extensionEnabled;
   enableDisabledButton.disabled = !extensionEnabled;
 
-  // Reload the active tab to apply changes immediately
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    if (tabs[0]) {
-      chrome.tabs.reload(tabs[0].id);
-    }
-  });
+  // Reload the active tab to apply changes immediately if necessary
+  if (
+    enableAlertsCheckbox.checked ||
+    enableHiddenCheckbox.checked ||
+    enableDisabledCheckbox.checked
+  ) {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (tabs[0]) {
+        chrome.tabs.reload(tabs[0].id);
+      }
+    });
+  }
 });
 
 // Add a click event listener to run Enable Hidden now

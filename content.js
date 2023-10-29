@@ -17,6 +17,7 @@ const IGNORED_STRINGS = "googletagmanager|doubleclick|google-analytics";
 
 // Listen for messages from the popup or background script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  console.log(`chrome.runtime.onMessage.addListener: ${message.action}`);
   if (message.action === "showHiddenElements") {
     // Call the showHiddenElements function
     showHiddenElements();
@@ -45,7 +46,7 @@ function enableDisabledElements() {
       .forEach((e) => {
         // Check if the element should be ignored based on the 'src' attribute
         const src = e.getAttribute("src");
-        if (!src || !new RegExp(IGNORED_STRINGS).test(src)) {
+        if (!src || !new RegExp(IGNORED_STRINGS, "i").test(src)) {
           e.disabled = false;
           e.style.cssText = "border-color: blue; border-width: 3px";
           const d = document.createElement("div");
@@ -100,7 +101,9 @@ function showHiddenElements() {
           const d = document.createElement("div");
           const elementType = e.getAttribute("type") || e.tagName;
           const elementName = e.getAttribute("name") || e.getAttribute("id");
-          d.innerHTML = `<span style="color: red;">Hidden ${elementType} [${elementName}]  </span>`;
+          d.innerHTML = `<span style="color: red;">Hidden ${htmlEntities(
+            elementType
+          )} [${htmlEntities(elementName)}]  </span>`;
           e.parentNode.insertBefore(d, e).appendChild(e);
         }
       });
@@ -125,7 +128,9 @@ function showHiddenElements() {
           const d = document.createElement("div");
           const elementType = e.getAttribute("type") || e.tagName;
           const elementName = e.getAttribute("name") || e.getAttribute("id");
-          d.innerHTML = `<span style="color: red;">Hidden ${elementType} [${elementName}]  </span>`;
+          d.innerHTML = `<span style="color: red;">Hidden ${htmlEntities(
+            elementType
+          )} [${htmlEntities(elementName)}]  </span>`;
           e.parentNode.insertBefore(d, e).appendChild(e);
         }
       });
@@ -142,8 +147,10 @@ chrome.storage.sync.get(
   [
     "canaryToken",
     "checkDelay",
+    "waybackJSOnly",
     "extensionEnabled",
     "alertsEnabled",
+    "waybackEnabled",
     "hiddenEnabled",
     "disabledEnabled",
   ],
@@ -159,6 +166,12 @@ chrome.storage.sync.get(
       alertsEnabled = false;
     } else {
       alertsEnabled = result.alertsEnabled || false;
+    }
+    if (result.waybackEnabled === undefined) {
+      chrome.storage.sync.set({ ["waybackEnabled"]: false });
+      waybackEnabled = false;
+    } else {
+      waybackEnabled = result.waybackEnabled || false;
     }
     if (result.hiddenEnabled === undefined) {
       chrome.storage.sync.set({ ["hiddenEnabled"]: false });
@@ -184,111 +197,79 @@ chrome.storage.sync.get(
     } else {
       checkDelay = result.checkDelay || "2";
     }
+    if (result.waybackJSOnly === undefined) {
+      chrome.storage.sync.set({ ["waybackJSOnly"]: false });
+      waybackJSOnly = true;
+    } else {
+      waybackJSOnly =
+        result.waybackJSOnly === undefined ? false : result.waybackJSOnly;
+    }
 
-    // Function to run your code after page load
-    function runAfterPageLoadOLD() {
+    function writeWaybackEndpoints() {
       try {
-        // Check if the extension is enabled and an option is selected
-        if (
-          extensionEnabled &&
-          (hiddenEnabled || disabledEnabled || alertsEnabled)
-        ) {
-          // Show hidden fields if the option is checked
-          if (hiddenEnabled) {
-            showHiddenElements();
-          }
-          // Enable disabled fields if the option is checked
-          if (disabledEnabled) {
-            enableDisabledElements();
-          }
-          // Alert on reflections if enabled
-          if (alertsEnabled) {
-            const params = new URLSearchParams(window.location.search);
-            const reflectedParameters = [];
-
-            params.forEach((value, key) => {
-              // Create a modified URL by replacing the current parameter's value
-              const modifiedParams = new URLSearchParams(params);
-              modifiedParams.set(key, canaryToken);
-              const modifiedURL = `${window.location.origin}${window.location.pathname}?${modifiedParams}`;
-
-              // Check if this URL and parameter have already triggered an alert
-              chrome.storage.local.get(
-                [window.location.href, key],
-                ({ [window.location.href]: urlData, [key]: paramData }) => {
-                  if (!urlData || !paramData) {
-                    // Initialize a timeout promise
-                    const timeoutPromise = new Promise((resolve, reject) => {
-                      setTimeout(() => {
-                        const timeoutError = new Error(
-                          `Xnl Reveal: Fetch timed out for URL: ${modifiedURL}`
+        // Get the current location without schema and query srting
+        currentLocation = location.host + location.pathname;
+        if (!currentLocation.endsWith("/")) {
+          currentLocation += "/";
+        }
+        // Check if this URL has already been used to check wayback
+        chrome.storage.local.get(
+          ["wayback://" + currentLocation],
+          ({ ["wayback://" + currentLocation]: waybackPath }) => {
+            if (!waybackPath) {
+              // Send a message to background.js to request Wayback Machine data
+              chrome.runtime.sendMessage(
+                {
+                  action: "fetchWaybackData",
+                  location: currentLocation,
+                },
+                (response) => {
+                  if (chrome.runtime.lastError) {
+                    // Handle any error that may occur when sending the message
+                    console.error(chrome.runtime.lastError);
+                    return;
+                  }
+                  const { waybackData, error } = response;
+                  if (error) {
+                    // Handle the error if there's one
+                    console.log(
+                      "Xnl Reveal: Error fetching Wayback Machine data:",
+                      error
+                    );
+                  } else {
+                    // Process the Wayback Machine data here
+                    if (waybackJSOnly) {
+                      // Process only lines that end with ".js" (excluding lines that end with "?", "#", or whitespace)
+                      const jsLines = waybackData
+                        .split("\n")
+                        .filter((line) =>
+                          new RegExp(".js[^$|?#]", "i").test(line.trim())
                         );
-                        reject(timeoutError);
-                      }, 30000); // 30 seconds (adjust as needed)
-                    });
-
-                    document.body.appendChild(statusBar);
-
-                    console.log(`Xnl Reveal: Fetching ${modifiedURL}`);
-                    // Use Promise.race to race fetch with the timeout promise
-                    Promise.race([fetch(modifiedURL), timeoutPromise])
-                      .then((response) => response.text())
-                      .then((text) => {
-                        // Check if the random string is reflected in the response
-                        if (text.includes(canaryToken)) {
-                          reflectedParameters.push(key);
-
-                          // Mark this URL and parameter as alerted
-                          const alertData = {
-                            [window.location.href]: true,
-                            [key]: true,
-                          };
-                          chrome.storage.local.set(alertData);
-
-                          // Check if we have processed all parameters and found reflections
-                          if (reflectedParameters.length === params.size) {
-                            if (reflectedParameters.length > 0) {
-                              // Display an alert with the parameter names that reflect
-                              if (alertsEnabled) {
-                                alert(
-                                  `Reflection found in URL: ${
-                                    window.location.href
-                                  }\n\nReflected Parameters: ${reflectedParameters.join(
-                                    ", "
-                                  )}`
-                                );
-                                // Write the info to the console too
-                                console.log(
-                                  `Xnl Reveal: Reflection found in URL: ${
-                                    window.location.href
-                                  }. Reflected Parameters: ${reflectedParameters.join(
-                                    ", "
-                                  )}`
-                                );
-                              }
-                            }
-                          }
-                        }
-                      })
-                      .catch((error) => {
-                        console.error("Xnl Reveal: Fetch error:", error); // Handle fetch errors here
-                      })
-                      .finally(() => {
-                        // Regardless of success or failure, remove the status bar
-                        statusBar.remove();
-                      });
+                      // Process the response if not blank
+                      if (jsLines.join("\n").trim() != "") {
+                        console.log(jsLines.join("\n").trim());
+                      }
+                    } else {
+                      console.log(waybackData);
+                    }
                   }
                 }
               );
-            });
+              // Mark this URL as visited
+              const waybackData = {
+                ["wayback://" + currentLocation]: true,
+              };
+              chrome.storage.local.set(waybackData);
+            } else {
+              console.log(
+                `Xnl Reveal: Location ${currentLocation} already checked on wayback archive.`
+              );
+            }
           }
-        }
+        );
       } catch (error) {
         // Handle other errors here
         console.error("Xnl Reveal: An error occurred:", error);
-
-        // Remove the status bar if an error occurs
-        statusBar.remove();
       }
     }
 
@@ -298,8 +279,12 @@ chrome.storage.sync.get(
         // Check if the extension is enabled and an option is selected
         if (
           extensionEnabled &&
-          (hiddenEnabled || disabledEnabled || alertsEnabled)
+          (hiddenEnabled || disabledEnabled || alertsEnabled || waybackEnabled)
         ) {
+          // Write wayback endpoints to console if the option is checked
+          if (waybackEnabled) {
+            writeWaybackEndpoints();
+          }
           // Show hidden fields if the option is checked
           if (hiddenEnabled) {
             showHiddenElements();
