@@ -1,8 +1,8 @@
 {
     "manifest_version": 3,
     "name": "Xnl Reveal",
-    "description": "Show alerts for reflected query params;  Show hidden elements;  Enable disabled elements.  See https://github.com/xnl-h4ck3r/XnlReveal for more details.",
-    "version": "0.2",
+    "description": "Show alerts for reflected query params;  Show Wayback endpoints; Show hidden elements;  Enable disabled elements.  See https://github.com/xnl-h4ck3r/XnlReveal for more details.",
+    "version": "0.3",
     "background": {
         "service_worker": "background.js"
     },
@@ -10,7 +10,8 @@
         "storage",
         "declarativeContent",
         "activeTab",
-        "tabs"
+        "tabs",
+        "contextMenus"
     ],
     "action": {
         "default_popup": "popup.html",

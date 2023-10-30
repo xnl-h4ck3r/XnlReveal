@@ -1,13 +1,17 @@
 <center><img src="https://github.com/xnl-h4ck3r/XnlReveal/blob/main/images/title.png"></center>
 
-## About - v0.2
+## About - v0.3
 
 This is a **Chrome Extension** that can do the following:
 
 - Show an alert for any query parameters that are reflected.
-- Show the Wayback Archive endpoints for the path visited
+- Show the Wayback Archive endpoints for the path visited.
 - Show any hidden elements on the page.
 - Enable any disabled elements on the page.
+- Provide a context menu to:
+  - Open a new tab to show Wayback endpoints for the current domain
+  - Show any hidden elements on the page (even if the extension isn't enabled to do automatically).
+  - Enable any disabled element on the page (even if the extension isn't enabled to do automatically).
 
 The first point was inspired by a comment by [@renniepak](https://x.com/renniepak) on Episode 42 of the [Critical Thinking - Bug Bounty Podcast](https://www.criticalthinkingpodcast.io/episode-42-renniepak-interview-intigriti-lhe-recap/) where he mentioned he had his own browser extension that let him know about any reflections.
 
@@ -59,11 +63,28 @@ You have the following settings:
 - `Show hidden elements` - If this is checked, then any elements (excluding `img`,`span` and `div`) that are hidden will be shown. They will be shown with a red border and a label in red that gives some detail. Sometimes, if the page is dynamic, the elements may not be shown. You can always click the **Run Now** button to change the current loaded page.
 - `Enable disabled elements` - If this is checked, then any elements (excluding `img`,`span` and `div`) that are hidden will be shown. They will be shown with a red border and a label in red that gives some detail. Sometimes, if the page is dynamic, the elements may not be shown. You can always click the **Run Now** button to change the current loaded page.
 
+## Context Menu
+
+If you right click on a webpage, you will get the browser context menu:
+
+<center><img src="https://github.com/xnl-h4ck3r/XnlReveal/blob/main/images/context.png"></center>
+
+These options are available even if the `ENABLE REVEAL` option in the **Popup Menu** is not selected. There are 3 options you can choose from:
+
+- `Get wayback endpoints` - If this is clicked, a new tab will be opened that will contain Wayback archive endpoints for the domain of the window it is clicked on. This isn't affected by any other settings and can be run even if the extension isn;t enabled.
+- `Show hidden elements` - This is the same as clicking the **Run Now** button for `Show hidden elements` on the **Popup Menu**, but the extension doesn't need to be enabled.
+- `Enable disabled elements` - This is the same as clicking the **Run Now** button for `Enable disabled elements` on the **Popup Menu**, but the extension doesn't need to be enabled.
+
 ## Important
 
 This Chrome extension isn't going to be perfect!<br>
 Sometimes the change of code can break a page. If you get a problem, unselected a certain setting in the popup menu will reload the page and it may be okay again, and you'll just not be able to check.<br>
 There may also be some Errors that are shown in the **Manage extension** page in certain situations.
+If you manually run an option from the context menu and nothing happens, you may need to refresh the page you are trying to run the option on and try again.
+
+## TODO
+
+- Provide a regex or whitelist of domains that the extension will only be enabled for. Then you can browse anything, but it will only do processing for targets you are interested in.
 
 ## Issues
 

@@ -1,5 +1,11 @@
 ## Changelog
 
+- v0.3
+
+  - New
+    - Add functionality for adding the extension to the Chrome context menu.
+    - Add options to the context menu for existing `Show hidden elements` and `Enable disabled elements` options, but also add a new option of `Get Wayback endpoints`. If clicked, a new tab will be opened that displays all endpoints for the current domain.
+
 - v0.2
 
   - New

@@ -17,13 +17,13 @@ const IGNORED_STRINGS = "googletagmanager|doubleclick|google-analytics";
 
 // Listen for messages from the popup or background script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log(`chrome.runtime.onMessage.addListener: ${message.action}`);
+  if (message.action === "showWaybackEndpoints") {
+    showWaybackEndpoints();
+  }
   if (message.action === "showHiddenElements") {
-    // Call the showHiddenElements function
     showHiddenElements();
   }
   if (message.action === "enableDisabledElements") {
-    // Call the enableDisabledElements function
     enableDisabledElements();
   }
 });
@@ -34,6 +34,25 @@ function htmlEntities(str) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+// Function to show all wayback endpoints for the domain in a separate window
+function showWaybackEndpoints() {
+  try {
+    var currentURL = encodeURIComponent(
+      window.location.hostname.replace(/^www\./, "")
+    );
+    console.log(`Xnl Reveal: Wayback location ${currentURL}`);
+    var newURL =
+      "https://web.archive.org/cdx/search/cdx?url=*." +
+      currentURL +
+      "&fl=original&collapse=urlkey&filter=!mimetype:warc/revisit|text/css|image/jpeg|image/jpg|image/png|image/svg.xml|image/gif|image/tiff|image/webp|image/bmp|image/vnd|image/x-icon|image/vnd.microsoft.icon|font/ttf|font/woff|font/woff2|font/x-woff2|font/x-woff|font/otf|audio/mpeg|audio/wav|audio/webm|audio/aac|audio/ogg|audio/wav|audio/webm|video/mp4|video/mpeg|video/webm|video/ogg|video/mp2t|video/webm|video/x-msvideo|video/x-flv|application/font-woff|application/font-woff2|application/x-font-woff|application/x-font-woff2|application/vnd.ms-fontobject|application/font-sfnt|application/vnd.android.package-archive|binary/octet-stream|application/octet-stream|application/pdf|application/x-font-ttf|application/x-font-otf|video/webm|video/3gpp|application/font-ttf|audio/mp3|audio/x-wav|image/pjpeg|audio/basic|application/font-otf&filter=!statuscode:404|301|302&page=";
+
+    // open the window
+    var newWindow = window.open(newURL, "_blank");
+  } catch (error) {
+    console.error("Xnl Reveal: Error in showWaybackEndpoints:", error);
+  }
 }
 
 // Function to enable disabled elements
