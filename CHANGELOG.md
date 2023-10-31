@@ -1,5 +1,12 @@
 ## Changelog
 
+- v1.0
+
+  - New
+
+    - Provide a Firefox version of the extension. A user will just be able to choose between the `chrome` folder and `firefox` folder.
+    - Add instructions to the README to include installing the extension in Firefox
+
 - v0.4
 
   - New

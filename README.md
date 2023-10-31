@@ -1,8 +1,8 @@
 <center><img src="https://github.com/xnl-h4ck3r/XnlReveal/blob/main/images/title.png"></center>
 
-## About - v0.4
+## About - v1.0
 
-This is a **Chrome Extension** that can do the following:
+This is a **Chrome/Firefox Extension** that can do the following:
 
 - Show an alert for any query parameters that are reflected.
 - Show the Wayback Archive endpoints for the path visited.
@@ -19,24 +19,41 @@ The third and fourth points were inspired by this [Tweet by Critical Thinking - 
 
 ## Installing
 
-1. Clone this repo to your machine.
+Clone this repo to your machine and then follow the instructions below, depending on whether you want install on a Chrome or Firefox browser:
 
-2. Open the Extension Manager in Chrome by following:
+### Chrome
+
+1. Open the Extension Manager in Chrome by following:
    Kebab menu(three vertical dots) -> Extensions -> Manage Extensions
 
-3. If the developer mode is not turned on, turn it on by clicking the toggle in the top right corner.
+2. If the developer mode is not turned on, turn it on by clicking the toggle in the top right corner.
 
-4. Now click on **Load unpacked** button on the top left
+3. Now click on **Load unpacked** button on the top left
 
-5. Go the directory where you have `XnlReveal` folder and select it.
+4. Go the directory where you have `XnlReveal` folder and select it.
 
-6. The extension is now loaded. You can click on the extension icon in the toolbar to pin `Xnl Reveal` to your toolbar.
+5. The extension is now loaded. You can click on the extension icon in the toolbar, and then the pin icon to pin `Xnl Reveal` to your toolbar.
+
+### Firefox
+
+**IMPORTANT: With Firefox extensions, you will need to load it each time you open Firefox**
+
+1. Go to `about:debugging` in a new browser tab.
+
+2. Click on the **This Firefox** heading on the left of the page.
+
+3. Click the **Load Temporary Add-on...** button under the **Temporary Extensions** heading.
+
+4. Navigate to the `Firefox` folder from the downloaded repo and select any file, and then click **Open**.
+
+5. The extension is now loaded. You can click on the extension icon in the toolbar, then click the Settings cog icon, and select **Pin to Toolbar**.
 
 ## Settings
 
 ### Options Page
 
-If you right click the `Xnl Reveal` logo in the toolbar and select **Options**, you will be taken to the Options page.
+- **Chrome**: If you right click the `Xnl Reveal` logo in the toolbar and select **Options**, you will be taken to the Options page.
+- **Firefox**: If you right click the `Xnl Reveal` logo in the toolbar and select **Manage Extension**, then click the **Options** tab to see the Options page.
 
 <center><img src="https://github.com/xnl-h4ck3r/XnlReveal/blob/main/images/options.png"></center>
 
@@ -77,7 +94,7 @@ These options are available even if the `ENABLE REVEAL` option in the **Popup Me
 
 ## Important
 
-This Chrome extension isn't going to be perfect!<br>
+This browser extension isn't going to be perfect!<br>
 Sometimes the change of code can break a page. If you get a problem, unselected a certain setting in the popup menu will reload the page and it may be okay again, and you'll just not be able to check.<br>
 There may also be some Errors that are shown in the **Manage extension** page in certain situations.
 If you manually run an option from the context menu and nothing happens, you may need to refresh the page you are trying to run the option on and try again.
@@ -85,6 +102,7 @@ If you manually run an option from the context menu and nothing happens, you may
 ## TODO
 
 - Provide a regex or whitelist of domains that the extension will only be enabled for. Then you can browse anything, but it will only do processing for targets you are interested in.
+- Look at registering the extension so you don't need to reload each time in Firefox.
 
 ## Issues
 

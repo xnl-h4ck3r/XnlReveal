@@ -16,7 +16,7 @@ statusBar.style.zIndex = "9999";
 const IGNORED_STRINGS = "googletagmanager|doubleclick|google-analytics";
 
 // Listen for messages from the popup or background script
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "showWaybackEndpoints") {
     showWaybackEndpoints();
   }
@@ -162,7 +162,7 @@ function showHiddenElements() {
 }
 
 // Read the user's random string and extension state from storage
-chrome.storage.sync.get(
+browser.storage.sync.get(
   [
     "canaryToken",
     "checkDelay",
@@ -175,49 +175,49 @@ chrome.storage.sync.get(
   ],
   (result) => {
     if (result.extensionEnabled === undefined) {
-      chrome.storage.sync.set({ ["extensionEnabled"]: false });
+      browser.storage.sync.set({ ["extensionEnabled"]: false });
       extensionEnabled = false;
     } else {
       extensionEnabled = result.extensionEnabled || false;
     }
     if (result.alertsEnabled === undefined) {
-      chrome.storage.sync.set({ ["alertsEnabled"]: false });
+      browser.storage.sync.set({ ["alertsEnabled"]: false });
       alertsEnabled = false;
     } else {
       alertsEnabled = result.alertsEnabled || false;
     }
     if (result.waybackEnabled === undefined) {
-      chrome.storage.sync.set({ ["waybackEnabled"]: false });
+      browser.storage.sync.set({ ["waybackEnabled"]: false });
       waybackEnabled = false;
     } else {
       waybackEnabled = result.waybackEnabled || false;
     }
     if (result.hiddenEnabled === undefined) {
-      chrome.storage.sync.set({ ["hiddenEnabled"]: false });
+      browser.storage.sync.set({ ["hiddenEnabled"]: false });
       hiddenEnabled = false;
     } else {
       hiddenEnabled = result.hiddenEnabled || false;
     }
     if (result.disabledEnabled === undefined) {
-      chrome.storage.sync.set({ ["disabledEnabled"]: false });
+      browser.storage.sync.set({ ["disabledEnabled"]: false });
       disabledEnabled = false;
     } else {
       disabledEnabled = result.disabledEnabled || false;
     }
     if (result.canaryToken === undefined) {
-      chrome.storage.sync.set({ ["canaryToken"]: "xnlmirror" });
-      canaryToken = "xnlmirror";
+      browser.storage.sync.set({ ["canaryToken"]: "xnlreveal" });
+      canaryToken = "xnlreveal";
     } else {
-      canaryToken = result.canaryToken || "xnlmirror";
+      canaryToken = result.canaryToken || "xnlreveal";
     }
     if (result.checkDelay === undefined) {
-      chrome.storage.sync.set({ ["checkDelay"]: "2" });
+      browser.storage.sync.set({ ["checkDelay"]: "2" });
       checkDelay = "2";
     } else {
       checkDelay = result.checkDelay || "2";
     }
     if (result.waybackJSOnly === undefined) {
-      chrome.storage.sync.set({ ["waybackJSOnly"]: false });
+      browser.storage.sync.set({ ["waybackJSOnly"]: false });
       waybackJSOnly = true;
     } else {
       waybackJSOnly =
@@ -232,20 +232,20 @@ chrome.storage.sync.get(
           currentLocation += "/";
         }
         // Check if this URL has already been used to check wayback
-        chrome.storage.local.get(
+        browser.storage.local.get(
           ["wayback://" + currentLocation],
           ({ ["wayback://" + currentLocation]: waybackPath }) => {
             if (!waybackPath) {
               // Send a message to background.js to request Wayback Machine data
-              chrome.runtime.sendMessage(
+              browser.runtime.sendMessage(
                 {
                   action: "fetchWaybackData",
                   location: currentLocation,
                 },
                 (response) => {
-                  if (chrome.runtime.lastError) {
+                  if (browser.runtime.lastError) {
                     // Handle any error that may occur when sending the message
-                    console.error(chrome.runtime.lastError);
+                    console.error(browser.runtime.lastError);
                     return;
                   }
                   const { waybackData, error } = response;
@@ -278,7 +278,7 @@ chrome.storage.sync.get(
               const waybackData = {
                 ["wayback://" + currentLocation]: true,
               };
-              chrome.storage.local.set(waybackData);
+              browser.storage.local.set(waybackData);
             } else {
               console.log(
                 `Xnl Reveal: Location ${currentLocation} already checked on wayback archive.`
@@ -326,7 +326,7 @@ chrome.storage.sync.get(
               const modifiedURL = `${window.location.origin}${window.location.pathname}?${modifiedParams}`;
 
               // Check if this URL and parameter have already triggered an alert
-              chrome.storage.local.get(
+              browser.storage.local.get(
                 [window.location.href, key],
                 ({ [window.location.href]: urlData, [key]: paramData }) => {
                   if (!urlData || !paramData) {
@@ -362,7 +362,7 @@ chrome.storage.sync.get(
                           [window.location.href]: true,
                           [key]: true,
                         };
-                        chrome.storage.local.set(alertData);
+                        browser.storage.local.set(alertData);
 
                         // Increment the successful requests counter
                         successfulRequests++;
