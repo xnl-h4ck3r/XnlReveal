@@ -292,7 +292,6 @@ chrome.storage.sync.get(
       }
     }
 
-    // Function to run your code after page load
     function runAfterPageLoad() {
       try {
         // Check if the extension is enabled and an option is selected
@@ -333,10 +332,10 @@ chrome.storage.sync.get(
                   if (!urlData || !paramData) {
                     // Initialize a timeout promise
                     const timeoutPromise = new Promise((resolve, reject) => {
+                      const timeoutError = new Error(
+                        `Xnl Reveal: Fetch timed out checking param "${key}" for URL: ${modifiedURL}`
+                      );
                       setTimeout(() => {
-                        const timeoutError = new Error(
-                          `Xnl Reveal: Fetch timed out checking param "${key}" for URL: ${modifiedURL}`
-                        );
                         reject(timeoutError);
                       }, 30000); // 30 seconds
                     });
@@ -345,8 +344,14 @@ chrome.storage.sync.get(
 
                     console.log(`Xnl Reveal: Fetching ${modifiedURL}`);
                     // Perform the fetch for this specific parameter
-                    fetch(modifiedURL)
-                      .then((response) => response.text())
+                    Promise.race([fetch(modifiedURL), timeoutPromise])
+                      .then((response) => {
+                        if (response instanceof Error) {
+                          console.error("Xnl Reveal: Fetch error:", response); // Handle fetch errors here
+                        } else {
+                          return response.text();
+                        }
+                      })
                       .then((text) => {
                         // Check if the random string is reflected in the response
                         if (text.includes(canaryToken)) {
