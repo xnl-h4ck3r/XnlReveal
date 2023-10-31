@@ -335,10 +335,10 @@ chrome.storage.sync.get(
                     const timeoutPromise = new Promise((resolve, reject) => {
                       setTimeout(() => {
                         const timeoutError = new Error(
-                          `Xnl Reveal: Fetch timed out for URL: ${modifiedURL}`
+                          `Xnl Reveal: Fetch timed out checking param "${key}" for URL: ${modifiedURL}`
                         );
                         reject(timeoutError);
-                      }, 30000); // 30 seconds (adjust as needed)
+                      }, 30000); // 30 seconds
                     });
 
                     document.body.appendChild(statusBar);
@@ -415,7 +415,24 @@ chrome.storage.sync.get(
     }
 
     // Use the window.onload event to trigger your code after the page has loaded.
-    window.onload = runAfterPageLoad;
+    if (window.onload) {
+      const existingOnLoad = window.onload;
+      window.onload = function () {
+        existingOnLoad();
+        runAfterPageLoad();
+      };
+    } else {
+      window.onload = runAfterPageLoad;
+    }
+
+    // Check if the window.onload event has already fired
+    if (document.readyState === "complete") {
+      // If it has, call the function immediately
+      runAfterPageLoad();
+    } else {
+      // If it hasn't, add an event listener for the DOMContentLoaded event
+      document.addEventListener("DOMContentLoaded", runAfterPageLoad);
+    }
 
     // Check if the extension is enabled and an option is selected. This will run again after the delay to catch dynamic content
     try {

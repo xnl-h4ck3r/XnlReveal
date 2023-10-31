@@ -5,21 +5,26 @@ let contextMenuWayback = {
   title: "Get Wayback endpoints",
   contexts: ["all"],
 };
-chrome.contextMenus.create(contextMenuWayback);
 
 let contextMenuHidden = {
   id: "showHiddenElements",
   title: "Show hidden elements",
   contexts: ["all"],
 };
-chrome.contextMenus.create(contextMenuHidden);
 
 let contextMenuDisabled = {
   id: "enableDisabledElements",
   title: "Enable disabled elements",
   contexts: ["all"],
 };
-chrome.contextMenus.create(contextMenuDisabled);
+
+// Check if the context menu items already exist
+chrome.contextMenus.removeAll(() => {
+  // Create context menu items after removing any existing ones
+  chrome.contextMenus.create(contextMenuWayback);
+  chrome.contextMenus.create(contextMenuHidden);
+  chrome.contextMenus.create(contextMenuDisabled);
+});
 
 chrome.contextMenus.onClicked.addListener(function (clickData) {
   // Find the active tab
