@@ -66,5 +66,5 @@ browser.runtime.onInstalled.addListener(() => {
   // Set defaults on installation
   browser.storage.sync.set({ canaryToken: "xnlreveal" });
   browser.storage.sync.set({ checkDelay: "2" });
-  browser.storage.sync.set({ waybackJSOnly: false });
+  browser.storage.sync.set({ waybackRegex: "" });
 });

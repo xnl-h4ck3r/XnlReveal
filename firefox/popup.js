@@ -1,63 +1,82 @@
-const enableExtensionCheckbox = document.getElementById("enableExtension");
-const enableAlertsCheckbox = document.getElementById("enableAlerts");
-const enableWaybackCheckbox = document.getElementById("enableWayback");
-const enableHiddenCheckbox = document.getElementById("enableHidden");
-const enableHiddenButton = document.getElementById("enableHiddenButton");
-const enableDisabledCheckbox = document.getElementById("enableDisabled");
-const enableDisabledButton = document.getElementById("enableDisabledButton");
+const enableExtensionButton = document.getElementById("enableExtension");
+const optionsFieldSet = document.getElementById("optionsFieldSet");
+const enableAlertsButton = document.getElementById("enableAlerts");
+const enableWaybackButton = document.getElementById("enableWayback");
+const enableHiddenButton = document.getElementById("enableHidden");
+const enableDisabledButton = document.getElementById("enableDisabled");
 
 // Load the current enabled state from storage
-browser.storage.sync.get(["extensionEnabled"], (result) => {
-  const extensionEnabled = result.extensionEnabled || false;
-  enableExtensionCheckbox.checked = extensionEnabled;
+browser.storage.sync.get(["extensionDisabled"], (result) => {
+  const extensionDisabled = result.extensionDisabled || "true";
+  enableExtensionButton.setAttribute("aria-checked", extensionDisabled);
 
-  // Disable the options checkbox if extensionEnabled is false
-  enableAlertsCheckbox.disabled = !extensionEnabled;
-  enableWaybackCheckbox.disabled = !extensionEnabled;
-  enableHiddenCheckbox.disabled = !extensionEnabled;
-  enableDisabledCheckbox.disabled = !extensionEnabled;
-  enableHiddenButton.disabled = !extensionEnabled;
-  enableDisabledButton.disabled = !extensionEnabled;
+  // Disable the options if extensionDisabled is true
+  optionsFieldSet.disabled = extensionDisabled === "true";
 });
-browser.storage.sync.get(["alertsEnabled"], (result) => {
-  const alertsEnabled = result.alertsEnabled || false;
-  enableAlertsCheckbox.checked = alertsEnabled;
+
+browser.storage.sync.get(["alertsDisabled"], (result) => {
+  const alertsDisabled = result.alertsDisabled || "true";
+  enableAlertsButton.setAttribute("aria-checked", alertsDisabled);
 });
-browser.storage.sync.get(["waybackEnabled"], (result) => {
-  const waybackEnabled = result.waybackEnabled || false;
-  enableWaybackCheckbox.checked = waybackEnabled;
+browser.storage.sync.get(["waybackDisabled"], (result) => {
+  const waybackDisabled = result.waybackDisabled || "true";
+  enableWaybackButton.setAttribute("aria-checked", waybackDisabled);
 });
-browser.storage.sync.get(["hiddenEnabled"], (result) => {
-  const hiddenEnabled = result.hiddenEnabled || false;
-  enableHiddenCheckbox.checked = hiddenEnabled;
+browser.storage.sync.get(["hiddenDisabled"], (result) => {
+  const hiddenDisabled = result.hiddenDisabled || "true";
+  enableHiddenButton.setAttribute("aria-checked", hiddenDisabled);
 });
-browser.storage.sync.get(["disabledEnabled"], (result) => {
-  const disabledEnabled = result.disabledEnabled || false;
-  enableDisabledCheckbox.checked = disabledEnabled;
+browser.storage.sync.get(["disabledDisabled"], (result) => {
+  const disabledDisabled = result.disabledDisabled || "true";
+  enableDisabledButton.setAttribute("aria-checked", disabledDisabled);
 });
 
 // Toggle the extension's show alerts state when the checkbox is changed
-enableAlertsCheckbox.addEventListener("change", () => {
-  const alertsEnabled = enableAlertsCheckbox.checked;
-  const setting = { ["alertsEnabled"]: alertsEnabled };
+enableAlertsButton.addEventListener("click", () => {
+  // Get the current value of the aria-checked attribute
+  const alertsDisabled = enableAlertsButton.getAttribute("aria-checked");
+
+  // Toggle the value (if "true", change it to "false"; if "false", change it to "true")
+  const newValue = alertsDisabled === "true" ? "false" : "true";
+
+  // Update the aria-checked attribute with the new value
+  enableAlertsButton.setAttribute("aria-checked", newValue);
+
+  const setting = { ["alertsDisabled"]: newValue };
   browser.storage.sync.set(setting);
 });
 
 // Toggle the extension's show wayback state when the checkbox is changed
-enableWaybackCheckbox.addEventListener("change", () => {
-  const waybackEnabled = enableWaybackCheckbox.checked;
-  const setting = { ["waybackEnabled"]: waybackEnabled };
+enableWaybackButton.addEventListener("click", () => {
+  // Get the current value of the aria-checked attribute
+  const waybackDisabled = enableWaybackButton.getAttribute("aria-checked");
+
+  // Toggle the value (if "true", change it to "false"; if "false", change it to "true")
+  const newValue = waybackDisabled === "true" ? "false" : "true";
+
+  // Update the aria-checked attribute with the new value
+  enableWaybackButton.setAttribute("aria-checked", newValue);
+
+  const setting = { ["waybackDisabled"]: newValue };
   browser.storage.sync.set(setting);
 });
 
 // Toggle the extension's show hidden state when the checkbox is changed
-enableHiddenCheckbox.addEventListener("change", () => {
-  const hiddenEnabled = enableHiddenCheckbox.checked;
-  const setting = { ["hiddenEnabled"]: hiddenEnabled };
+enableHiddenButton.addEventListener("click", () => {
+  // Get the current value of the aria-checked attribute
+  const hiddenDisabled = enableHiddenButton.getAttribute("aria-checked");
+
+  // Toggle the value (if "true", change it to "false"; if "false", change it to "true")
+  const newValue = hiddenDisabled === "true" ? "false" : "true";
+
+  // Update the aria-checked attribute with the new value
+  enableHiddenButton.setAttribute("aria-checked", newValue);
+
+  const setting = { ["hiddenDisabled"]: newValue };
   browser.storage.sync.set(setting);
 
   // Reload the active tab to apply changes immediately
-  browser.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
+  browser.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     if (tabs[0]) {
       browser.tabs.reload(tabs[0].id);
     }
@@ -65,13 +84,21 @@ enableHiddenCheckbox.addEventListener("change", () => {
 });
 
 // Toggle the extension's show disabled state when the checkbox is changed
-enableDisabledCheckbox.addEventListener("change", () => {
-  const disabledEnabled = enableDisabledCheckbox.checked;
-  const setting = { ["disabledEnabled"]: disabledEnabled };
+enableDisabledButton.addEventListener("click", () => {
+  // Get the current value of the aria-checked attribute
+  const disabledEnabled = enableDisabledButton.getAttribute("aria-checked");
+
+  // Toggle the value (if "true", change it to "false"; if "false", change it to "true")
+  const newValue = disabledEnabled === "true" ? "false" : "true";
+
+  // Update the aria-checked attribute with the new value
+  enableDisabledButton.setAttribute("aria-checked", newValue);
+
+  const setting = { ["disabledDisabled"]: newValue };
   browser.storage.sync.set(setting);
 
   // Reload the active tab to apply changes immediately
-  browser.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
+  browser.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     if (tabs[0]) {
       browser.tabs.reload(tabs[0].id);
     }
@@ -79,51 +106,32 @@ enableDisabledCheckbox.addEventListener("change", () => {
 });
 
 // Toggle the extension's enabled state when the checkbox is changed
-enableExtensionCheckbox.addEventListener("change", () => {
-  const extensionEnabled = enableExtensionCheckbox.checked;
-  const setting = { ["extensionEnabled"]: extensionEnabled };
+enableExtensionButton.addEventListener("click", () => {
+  // Get the current value of the aria-checked attribute
+  const extensionDisabled = enableExtensionButton.getAttribute("aria-checked");
+
+  // Toggle the value (if "true", change it to "false"; if "false", change it to "true")
+  const newValue = extensionDisabled === "true" ? "false" : "true";
+
+  // Update the aria-checked attribute with the new value
+  enableExtensionButton.setAttribute("aria-checked", newValue);
+
+  const setting = { ["extensionDisabled"]: newValue };
   browser.storage.sync.set(setting);
 
-  // Disable the other options if extensionEnabled is false
-  enableAlertsCheckbox.disabled = !extensionEnabled;
-  enableWaybackCheckbox.disabled = !extensionEnabled;
-  enableHiddenCheckbox.disabled = !extensionEnabled;
-  enableDisabledCheckbox.disabled = !extensionEnabled;
-  enableHiddenButton.disabled = !extensionEnabled;
-  enableDisabledButton.disabled = !extensionEnabled;
+  // Disable the options checkbox if extensionEnabled is true
+  optionsFieldSet.disabled = newValue === "true";
 
   // Reload the active tab to apply changes immediately if necessary
   if (
-    enableAlertsCheckbox.checked ||
-    enableHiddenCheckbox.checked ||
-    enableDisabledCheckbox.checked
+    enableAlertsButton.getAttribute("aria-checked") === "false" ||
+    enableHiddenButton.getAttribute("aria-checked") === "false" ||
+    enableDisabledButton.getAttribute("aria-checked") === "false"
   ) {
-    browser.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
+    browser.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       if (tabs[0]) {
         browser.tabs.reload(tabs[0].id);
       }
     });
   }
-});
-
-// Add a click event listener to run Enable Hidden now
-enableHiddenButton.addEventListener("click", () => {
-  // Execute the showHiddenElements function in the content script
-  browser.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
-    if (tabs[0]) {
-      browser.tabs.sendMessage(tabs[0].id, { action: "showHiddenElements" });
-    }
-  });
-});
-
-// Add a click event listener to run Enable Disabled now
-enableDisabledButton.addEventListener("click", () => {
-  // Execute the enableDisabledElements function in the content script
-  browser.tabs.query({ active: true, currentWindow: true }).then((tabs) => {
-    if (tabs[0]) {
-      browser.tabs.sendMessage(tabs[0].id, {
-        action: "enableDisabledElements",
-      });
-    }
-  });
 });

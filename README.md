@@ -1,6 +1,6 @@
 <center><img src="https://github.com/xnl-h4ck3r/XnlReveal/blob/main/images/title.png"></center>
 
-## About - v1.0
+## About - v1.1
 
 This is a **Chrome/Firefox Extension** that can do the following:
 
@@ -9,7 +9,7 @@ This is a **Chrome/Firefox Extension** that can do the following:
 - Show any hidden elements on the page.
 - Enable any disabled elements on the page.
 - Provide a context menu to:
-  - Open a new tab to show Wayback endpoints for the current domain
+  - Open a new tab to show Wayback endpoints for the current domain.
   - Show any hidden elements on the page (even if the extension isn't enabled to do automatically).
   - Enable any disabled element on the page (even if the extension isn't enabled to do automatically).
 
@@ -61,7 +61,7 @@ You have the following options:
 
 - `Canary token` - When requests are made to test for reflection of query parameters, this is the value of the parameter that is used and checked for.
 - `Check delay` - When a page is loaded, depending on settings, the extension will try to show hidden elements and enable disabled elements. However, sometimes parts of the page are loaded dynamically and they aren't in the original response. THe extension will try to show and enable again after this delay (in seconds) after the page has initially loaded.
-- `Only write JS Wayback endpoints` - If the setting to write Wayback archive endpoints has been selected, then if this option is checked, only endpoints for JS files will be written to the browser console.
+- `Wayback RegEx` - If the setting to write Wayback archive endpoints has been selected, then only wayback endpoints that match the entered RegEx will be displayed in the console. If the field is left blank, then all Wayback endpoints are returned.
 - `Save` - If any options are changed, click this button to save them for future use.
 - `Clear Saved URLs/Params` - If the extension is looking for reflected query parameters, then you don't want to keep getting alerted for the same URL/Parameter combinations, so those that have been reported are stored to prevent this. However, if you want to remove the memory of those, you can click this button to remove them. Similarly, we don't want to keep passing the same requests to the Wayback archive, so those are also stored, but can be cleared if this button is pressed.
 
@@ -77,7 +77,7 @@ You have the following settings:
 - `Show query param reflection alerts` - If this is checked, then when a web page is visited that has any query parameters, a background request is made for each parameter, replacing each n turn with the **Canary token** from the Options page. If the token is found for any of the parameters the response then an alert box is shown giving you the URL and all the parameters on that page that were reflected. These are also written to the browser console.<br>
   **NOTE: If there are many parameters, it can take some time to send all the requests and wait for the responses. A red status bar is displayed at the top of the page to let you know to wait. Also, if the page is dynamic, then these may not be found in the initial response and reported.**
 - `Write Wayback endpoints to console` - If this is checked, then for each location/path visited in the browser, endpoints will be retrieved from the Wayback archive and written to the console. Once a location/path has been sent to the Wayback API it will not be sent again, unless the `Clear Saved URLs/Params` has been clicked.
-- `Show hidden elements` - If this is checked, then any elements (excluding `img`,`span` and `div`) that are hidden will be shown. They will be shown with a red border and a label in red that gives some detail. Sometimes, if the page is dynamic, the elements may not be shown. You can always click the **Run Now** button to change the current loaded page.
+- `Show hidden elements` - If this is checked, then any elements (excluding `img`,`span` and `div`) that are hidden will be shown. They will be shown with a red border and a label in red that gives some detail. Sometimes, if the page is dynamic, the elements may not be shown.
 - `Enable disabled elements` - If this is checked, then any elements (excluding `img`,`span` and `div`) that are hidden will be shown. They will be shown with a red border and a label in red that gives some detail. Sometimes, if the page is dynamic, the elements may not be shown. You can always click the **Run Now** button to change the current loaded page.
 
 ## Context Menu
@@ -89,8 +89,8 @@ If you right click on a webpage, you will get the browser context menu:
 These options are available even if the `ENABLE REVEAL` option in the **Popup Menu** is not selected. There are 3 options you can choose from:
 
 - `Get wayback endpoints` - If this is clicked, a new tab will be opened that will contain Wayback archive endpoints for the domain of the window it is clicked on. This isn't affected by any other settings and can be run even if the extension isn;t enabled.
-- `Show hidden elements` - This is the same as clicking the **Run Now** button for `Show hidden elements` on the **Popup Menu**, but the extension doesn't need to be enabled.
-- `Enable disabled elements` - This is the same as clicking the **Run Now** button for `Enable disabled elements` on the **Popup Menu**, but the extension doesn't need to be enabled.
+- `Show hidden elements` - This will show all hidden elements on the current page, in the same way as the `Show hidden elements` does, but the extension doesn't need to be enabled.
+- `Enable disabled elements` - TThis will enable all disabled elements on the current page, in the same way as the `Enable disabled elements` does, but the extension doesn't need to be enabled.
 
 ## Important
 
@@ -101,7 +101,9 @@ If you manually run an option from the context menu and nothing happens, you may
 
 ## TODO
 
-- Provide a regex or whitelist of domains that the extension will only be enabled for. Then you can browse anything, but it will only do processing for targets you are interested in.
+- Provide a whitelist/blacklist of domains that the extension will only be enabled for. Then you can browse anything, but it will only do processing for targets you are interested in.
+- Improve the UI more.
+- Allow the user to alter the Wayback API URL that gets called so exclusions can be edited.
 - Look at registering the extension so you don't need to reload each time in Firefox.
 
 ## Issues

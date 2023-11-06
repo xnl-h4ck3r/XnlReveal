@@ -1,5 +1,17 @@
 ## Changelog
 
+- v1.1
+
+  - New
+
+    - Include an external CSS file, one for Chrome and one for Firefox.
+
+  - Changed
+
+    - Replace the `Only write JS Wayback endpoints` option with `Wayback RegEx` and a text box to enter a regular expression. If left blank, then wayback endpoints will not be limited. If anything is entered, it will be used to limit what is returned for each page, e.g. to only return javascript files, a user could enter `\.js($|#|\?)`
+    - Improve the UI of `popup.html` and `options.html`.
+    - Remove the **Run Now** buttons from the popup page because these can be executed from the context menu instead.
+
 - v1.0
 
   - New

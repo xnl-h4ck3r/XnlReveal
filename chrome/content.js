@@ -166,43 +166,43 @@ chrome.storage.sync.get(
   [
     "canaryToken",
     "checkDelay",
-    "waybackJSOnly",
-    "extensionEnabled",
-    "alertsEnabled",
-    "waybackEnabled",
-    "hiddenEnabled",
-    "disabledEnabled",
+    "waybackRegex",
+    "extensionDisabled",
+    "alertsDisabled",
+    "waybackDisabled",
+    "hiddenDisabled",
+    "disabledDisabled",
   ],
   (result) => {
-    if (result.extensionEnabled === undefined) {
-      chrome.storage.sync.set({ ["extensionEnabled"]: false });
-      extensionEnabled = false;
+    if (result.extensionDisabled === undefined) {
+      chrome.storage.sync.set({ ["extensionDisabled"]: "true" });
+      extensionDisabled = "true";
     } else {
-      extensionEnabled = result.extensionEnabled || false;
+      extensionDisabled = result.extensionDisabled || "true";
     }
-    if (result.alertsEnabled === undefined) {
-      chrome.storage.sync.set({ ["alertsEnabled"]: false });
-      alertsEnabled = false;
+    if (result.alertsDisabled === undefined) {
+      chrome.storage.sync.set({ ["alertsDisabled"]: "true" });
+      alertsDisabled = "true";
     } else {
-      alertsEnabled = result.alertsEnabled || false;
+      alertsDisabled = result.alertsDisabled || "true";
     }
-    if (result.waybackEnabled === undefined) {
-      chrome.storage.sync.set({ ["waybackEnabled"]: false });
-      waybackEnabled = false;
+    if (result.waybackDisabled === undefined) {
+      chrome.storage.sync.set({ ["waybackDisabled"]: "true" });
+      waybackDisabled = "true";
     } else {
-      waybackEnabled = result.waybackEnabled || false;
+      waybackDisabled = result.waybackDisabled || "true";
     }
-    if (result.hiddenEnabled === undefined) {
-      chrome.storage.sync.set({ ["hiddenEnabled"]: false });
-      hiddenEnabled = false;
+    if (result.hiddenDisabled === undefined) {
+      chrome.storage.sync.set({ ["hiddenDisabled"]: "true" });
+      hiddenDisabled = "true";
     } else {
-      hiddenEnabled = result.hiddenEnabled || false;
+      hiddenDisabled = result.hiddenDisabled || "true";
     }
-    if (result.disabledEnabled === undefined) {
-      chrome.storage.sync.set({ ["disabledEnabled"]: false });
-      disabledEnabled = false;
+    if (result.disabledDisabled === undefined) {
+      chrome.storage.sync.set({ ["disabledDisabled"]: "true" });
+      disabledDisabled = "true";
     } else {
-      disabledEnabled = result.disabledEnabled || false;
+      disabledDisabled = result.disabledDisabled || "true";
     }
     if (result.canaryToken === undefined) {
       chrome.storage.sync.set({ ["canaryToken"]: "xnlreveal" });
@@ -216,12 +216,11 @@ chrome.storage.sync.get(
     } else {
       checkDelay = result.checkDelay || "2";
     }
-    if (result.waybackJSOnly === undefined) {
-      chrome.storage.sync.set({ ["waybackJSOnly"]: false });
-      waybackJSOnly = true;
+    if (result.waybackRegex === undefined) {
+      chrome.storage.sync.set({ ["waybackRegex"]: "" });
+      waybackRegex = "";
     } else {
-      waybackJSOnly =
-        result.waybackJSOnly === undefined ? false : result.waybackJSOnly;
+      waybackRegex = result.waybackRegex || "";
     }
 
     function writeWaybackEndpoints() {
@@ -257,12 +256,12 @@ chrome.storage.sync.get(
                     );
                   } else {
                     // Process the Wayback Machine data here
-                    if (waybackJSOnly) {
+                    if (waybackRegex != "") {
                       // Process only lines that end with ".js" (excluding lines that end with "?", "#", or whitespace)
                       const jsLines = waybackData
                         .split("\n")
                         .filter((line) =>
-                          new RegExp(".js[^$|?#]", "i").test(line.trim())
+                          new RegExp(waybackRegex, "i").test(line.trim())
                         );
                       // Process the response if not blank
                       if (jsLines.join("\n").trim() != "") {
@@ -296,23 +295,26 @@ chrome.storage.sync.get(
       try {
         // Check if the extension is enabled and an option is selected
         if (
-          extensionEnabled &&
-          (hiddenEnabled || disabledEnabled || alertsEnabled || waybackEnabled)
+          extensionDisabled === "false" &&
+          (hiddenDisabled === "false" ||
+            disabledDisabled === "false" ||
+            alertsDisabled === "false" ||
+            waybackDisabled === "false")
         ) {
           // Write wayback endpoints to console if the option is checked
-          if (waybackEnabled) {
+          if (waybackDisabled === "false") {
             writeWaybackEndpoints();
           }
           // Show hidden fields if the option is checked
-          if (hiddenEnabled) {
+          if (hiddenDisabled === "false") {
             showHiddenElements();
           }
           // Enable disabled fields if the option is checked
-          if (disabledEnabled) {
+          if (disabledDisabled === "false") {
             enableDisabledElements();
           }
           // Alert on reflections if enabled
-          if (alertsEnabled) {
+          if (alertsDisabled === "false") {
             const params = new URLSearchParams(window.location.search);
             const reflectedParameters = [];
 
@@ -371,7 +373,7 @@ chrome.storage.sync.get(
                         if (successfulRequests === params.size) {
                           if (reflectedParameters.length > 0) {
                             // Display an alert with the parameter names that reflect
-                            if (alertsEnabled) {
+                            if (alertsDisabled === "false") {
                               alert(
                                 `Reflection found in URL: ${
                                   window.location.href
@@ -441,14 +443,17 @@ chrome.storage.sync.get(
 
     // Check if the extension is enabled and an option is selected. This will run again after the delay to catch dynamic content
     try {
-      if (extensionEnabled && (hiddenEnabled || disabledEnabled)) {
+      if (
+        extensionDisabled === "false" &&
+        (hiddenDisabled === "false" || disabledDisabled === "false")
+      ) {
         setTimeout(() => {
           // Show hidden fields if the option is checked
-          if (hiddenEnabled) {
+          if (hiddenDisabled === "false") {
             showHiddenElements();
           }
           // Enable disabled fields if the option is checked
-          if (disabledEnabled) {
+          if (disabledDisabled === "false") {
             enableDisabledElements();
           }
         }, Number(checkDelay) * 1000);

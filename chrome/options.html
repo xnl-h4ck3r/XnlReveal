@@ -1,75 +1,47 @@
 <!DOCTYPE html>
-<html>
-<head>
-  <title>Xnl Reveal</title>
-  <style>
-    .container {
-      margin: 20px;
-    }
+ <html>
+  <head>
+    <link rel="stylesheet" href="xnl.css">
+  </head>
+  <body>
+    <header>
+      <div class="title">
+        <h1 id="heading">Xnl Reveal</h1>
+        <div class="logo" role="image" aria-label="Xnl-h4ack3r logo"></div>
+        <div class="creator">Created by Xnl-h4ck3r</div>
+        <nav>
+          <ul>
+            <li><a href="https://github.com/xnl-h4ck3r/XnlReveal" target="_blank">Help</a></li>
+            <li><a class="twitter" target="_blank" href="https://x.com/xnl_h4ck3r" target="_blank">Twitter/X
+              </a></li>
+            <li><a href="https://github.com/xnl-h4ck3r" target="_blank">GitHub</a></li>
+          </ul>
+        </nav>
+    </header>
+    <main>
+      <h2>Options</h2>
+      <form class="container2" aria-labelledby="heading">
+        <label>
+          Canary token: 
+          <input type="text"  id="canaryTokenInput"/>
+        </label>
+        <label>
+          Check delay: 
+          <input  id="checkDelayInput" maxlength="2" size="1" pattern="[0-9]" />
+          seconds
+        </label>
+        <label>
+          Wayback RegEx: 
+          <input type="text" id="waybackRegexInput" placeholder="e.g. for JS files:  \.js($|#|\?)"/>
+        </label>
 
-    .message {
-      text-align: left;
-      margin-top: 10px;
-      color: blue;
-    }
-
-    .input-container {
-      display: flex;
-      align-items: center;
-      margin: 5px 0;
-    }
-
-    label, input, button {
-      margin-right: 10px;
-    }
-
-    img {
-      width: 160px;
-      max-height: 160px;
-    }
-    
-    td {
-      padding: 15px;
-      vertical-align: middle;
-    }
-
-    .button-container {
-      display: flex;
-      align-items: center;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <table>
-      <tr>
-        <td width="130px">
-          <img src="images/icon.png" alt="Extension Icon">
-        </td>
-        <td>
-          <h2>XNL Reveal</h2>
-          <div class="input-container">
-            <label for="canaryTokenInput">Canary token:</label>
-            <input type="text" id="canaryTokenInput">
-          </div>
-          <div class="input-container">
-            <label for="checkDelayInput">Check delay:</label>
-            <input type="text" id="checkDelayInput"  maxlength="2" size="1" pattern="[0-9]">
-            <label for="seconds">seconds</label>
-          </div>
-          <div class="input-container">
-            <input type="checkbox" id="waybackJSOnlyInput">
-            <label for="waybackJSOnlyInput">Only write JS Wayback endpoints</label>
-          </div>
-          <div class="button-container">
-            <button id="saveButton">Save</button>
-            <button id="clearStorageButton">Clear Saved URLs/Params</button>
-          </div>
-          <div class="message" id="clearStorageMessage" style="height: 40px;"></div>
-        </td>
-      </tr>
-    </table>
-  </div>
-</body>
-<script src="options.js"></script>
-</html>
+      </form>
+      <div class="button-group">
+        <button type="submit" id="saveButton">Save</button>
+        <button type="button" id="clearStorageButton">Clear saved URLs / params</button>
+      </div>
+      <div class="message" id="clearStorageMessage">&nbsp;</div>
+    </main>
+  </body>
+  <script src="options.js"></script>
+ </html>
