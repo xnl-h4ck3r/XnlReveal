@@ -1,5 +1,15 @@
 ## Changelog
 
+- v1.2
+
+  - New
+
+    - Add Buy me a Coffee link to the options page.
+
+  - Changed
+
+    - Change the example RegEx for JS files to be followed by a `.` to maybe get `.js.map` files.
+
 - v1.1
 
   - New
