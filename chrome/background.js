@@ -37,7 +37,32 @@ chrome.contextMenus.onClicked.addListener(function (clickData) {
 });
 
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-  // Check if the background is ready before processing messages
+  if (request.action === "getTabInfo") {
+    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+      if (chrome.runtime.lastError) {
+        console.error(
+          "Xnl Reveal: An error occurred while querying tabs:",
+          chrome.runtime.lastError
+        );
+        sendResponse({ error: chrome.runtime.lastError });
+        return;
+      }
+
+      if (tabs && tabs[0]) {
+        const currentHost = new URL(tabs[0].url).host;
+
+        // Handle the tab information and send it back to the content script
+        sendResponse({ currentHost });
+      } else {
+        console.error("Xnl Reveal: No active tab found");
+        sendResponse({ error: "Xnl Reveal: No active tab found" });
+      }
+    });
+
+    // Indicate that you will respond asynchronously
+    return true;
+  }
+
   if (request.action === "fetchWaybackData") {
     const currentURL = request.location; // Get the current URL from the content script
 
@@ -67,4 +92,5 @@ chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.sync.set({ canaryToken: "xnlreveal" });
   chrome.storage.sync.set({ checkDelay: "2" });
   chrome.storage.sync.set({ waybackRegex: "" });
+  chrome.storage.sync.set({ scopeType: "" });
 });

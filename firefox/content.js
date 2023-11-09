@@ -291,6 +291,65 @@ browser.storage.sync.get(
       }
     }
 
+    function isHostInScope(callback) {
+      // Send a message to the background script to request tab information
+      browser.runtime.sendMessage(
+        { action: "getTabInfo" },
+        function (response) {
+          if (response.error) {
+            console.error(
+              "An error occurred while querying tabs:",
+              response.error
+            );
+            callback(false); // Return false when there's an error
+            return;
+          }
+
+          const currentHost = response.currentHost;
+
+          try {
+            // Get the scope type from storage
+            browser.storage.sync.get(["scopeType"], (scopeResult) => {
+              const scopeType = scopeResult.scopeType || "whitelist"; // Default to "whitelist" if not set
+
+              // Get the scope items from storage
+              browser.storage.sync.get(["scopeItems"], (itemsResult) => {
+                const scopeItems = itemsResult.scopeItems || [];
+
+                // If scopeItems is empty, return true
+                if (scopeItems.length === 0) {
+                  callback(true);
+                  return;
+                }
+
+                // Check if any scope items match the current host
+                const isMatch = scopeItems.some((item) =>
+                  currentHost.includes(item)
+                );
+
+                // Determine the result based on scope type
+                let result;
+                if (scopeType === "whitelist") {
+                  result = isMatch;
+                } else if (scopeType === "blacklist") {
+                  result = !isMatch;
+                }
+
+                // Use the callback to handle the result
+                callback(result);
+              });
+            });
+          } catch (error) {
+            console.error(
+              "An error occurred while accessing Browser storage:",
+              error
+            );
+            callback(false); // Return false when there's an error
+          }
+        }
+      );
+    }
+
     function runAfterPageLoad() {
       try {
         // Check if the extension is enabled and an option is selected
@@ -301,116 +360,126 @@ browser.storage.sync.get(
             alertsDisabled === "false" ||
             waybackDisabled === "false")
         ) {
-          // Write wayback endpoints to console if the option is checked
-          if (waybackDisabled === "false") {
-            writeWaybackEndpoints();
-          }
-          // Show hidden fields if the option is checked
-          if (hiddenDisabled === "false") {
-            showHiddenElements();
-          }
-          // Enable disabled fields if the option is checked
-          if (disabledDisabled === "false") {
-            enableDisabledElements();
-          }
-          // Alert on reflections if enabled
-          if (alertsDisabled === "false") {
-            const params = new URLSearchParams(window.location.search);
-            const reflectedParameters = [];
+          // Call isHostInScope with a callback to handle the result
+          isHostInScope((inScope) => {
+            if (inScope) {
+              // Write wayback endpoints to console if the option is checked
+              if (waybackDisabled === "false") {
+                writeWaybackEndpoints();
+              }
+              // Show hidden fields if the option is checked
+              if (hiddenDisabled === "false") {
+                showHiddenElements();
+              }
+              // Enable disabled fields if the option is checked
+              if (disabledDisabled === "false") {
+                enableDisabledElements();
+              }
+              // Alert on reflections if enabled
+              if (alertsDisabled === "false") {
+                const params = new URLSearchParams(window.location.search);
+                const reflectedParameters = [];
 
-            // Initialize a counter to keep track of successful requests
-            let successfulRequests = 0;
+                // Initialize a counter to keep track of successful requests
+                let successfulRequests = 0;
 
-            params.forEach((value, key) => {
-              // Create a modified URL by replacing the current parameter's value
-              const modifiedParams = new URLSearchParams(params);
-              modifiedParams.set(key, canaryToken);
-              const modifiedURL = `${window.location.origin}${window.location.pathname}?${modifiedParams}`;
+                params.forEach((value, key) => {
+                  // Create a modified URL by replacing the current parameter's value
+                  const modifiedParams = new URLSearchParams(params);
+                  modifiedParams.set(key, canaryToken);
+                  const modifiedURL = `${window.location.origin}${window.location.pathname}?${modifiedParams}`;
 
-              // Check if this URL and parameter have already triggered an alert
-              browser.storage.local.get(
-                [window.location.href, key],
-                ({ [window.location.href]: urlData, [key]: paramData }) => {
-                  if (!urlData || !paramData) {
-                    // Initialize a timeout promise
-                    const timeoutPromise = new Promise((resolve, reject) => {
-                      const timeoutError = new Error(
-                        `Xnl Reveal: Fetch timed out checking param "${key}" for URL: ${modifiedURL}`
-                      );
-                      setTimeout(() => {
-                        reject(timeoutError);
-                      }, 30000); // 30 seconds
-                    });
-
-                    document.body.appendChild(statusBar);
-
-                    console.log(`Xnl Reveal: Fetching ${modifiedURL}`);
-                    // Perform the fetch for this specific parameter
-                    Promise.race([fetch(modifiedURL), timeoutPromise])
-                      .then((response) => {
-                        if (response instanceof Error) {
-                          console.error("Xnl Reveal: Fetch error:", response); // Handle fetch errors here
-                        } else {
-                          return response.text();
-                        }
-                      })
-                      .then((text) => {
-                        // Check if the random string is reflected in the response
-                        if (text.includes(canaryToken)) {
-                          reflectedParameters.push(key);
-                        }
-                        // Mark this URL and parameter as alerted
-                        const alertData = {
-                          [window.location.href]: true,
-                          [key]: true,
-                        };
-                        browser.storage.local.set(alertData);
-
-                        // Increment the successful requests counter
-                        successfulRequests++;
-
-                        // Check if we have processed all parameters and found reflections
-                        if (successfulRequests === params.size) {
-                          if (reflectedParameters.length > 0) {
-                            // Display an alert with the parameter names that reflect
-                            if (alertsDisabled === "false") {
-                              alert(
-                                `Reflection found in URL: ${
-                                  window.location.href
-                                }\n\nReflected Parameters: ${reflectedParameters.join(
-                                  ", "
-                                )}`
-                              );
-                            }
-                            // Write the info to the console too
-                            console.log(
-                              `Xnl Reveal: Reflection found in URL: ${
-                                window.location.href
-                              }. Reflected Parameters: ${reflectedParameters.join(
-                                ", "
-                              )}`
+                  // Check if this URL and parameter have already triggered an alert
+                  browser.storage.local.get(
+                    [window.location.href, key],
+                    ({ [window.location.href]: urlData, [key]: paramData }) => {
+                      if (!urlData || !paramData) {
+                        // Initialize a timeout promise
+                        const timeoutPromise = new Promise(
+                          (resolve, reject) => {
+                            const timeoutError = new Error(
+                              `Xnl Reveal: Fetch timed out checking param "${key}" for URL: ${modifiedURL}`
                             );
+                            setTimeout(() => {
+                              reject(timeoutError);
+                            }, 30000); // 30 seconds
                           }
-                          // Remove the status bar once all requests are processed
-                          statusBar.remove();
-                        }
-                      })
-                      .catch((error) => {
-                        console.error("Xnl Reveal: Fetch error:", error); // Handle fetch errors here
+                        );
 
-                        // Increment the successful requests counter even for failed requests
-                        successfulRequests++;
+                        document.body.appendChild(statusBar);
 
-                        // Check if we have processed all parameters
-                        if (successfulRequests === params.size) {
-                          statusBar.remove(); // Remove the status bar once all requests are processed
-                        }
-                      });
-                  }
-                }
-              );
-            });
-          }
+                        console.log(`Xnl Reveal: Fetching ${modifiedURL}`);
+                        // Perform the fetch for this specific parameter
+                        Promise.race([fetch(modifiedURL), timeoutPromise])
+                          .then((response) => {
+                            if (response instanceof Error) {
+                              console.error(
+                                "Xnl Reveal: Fetch error:",
+                                response
+                              ); // Handle fetch errors here
+                            } else {
+                              return response.text();
+                            }
+                          })
+                          .then((text) => {
+                            // Check if the random string is reflected in the response
+                            if (text.includes(canaryToken)) {
+                              reflectedParameters.push(key);
+                            }
+                            // Mark this URL and parameter as alerted
+                            const alertData = {
+                              [window.location.href]: true,
+                              [key]: true,
+                            };
+                            browser.storage.local.set(alertData);
+
+                            // Increment the successful requests counter
+                            successfulRequests++;
+
+                            // Check if we have processed all parameters and found reflections
+                            if (successfulRequests === params.size) {
+                              if (reflectedParameters.length > 0) {
+                                // Display an alert with the parameter names that reflect
+                                if (alertsDisabled === "false") {
+                                  alert(
+                                    `Reflection found in URL: ${
+                                      window.location.href
+                                    }\n\nReflected Parameters: ${reflectedParameters.join(
+                                      ", "
+                                    )}`
+                                  );
+                                }
+                                // Write the info to the console too
+                                console.log(
+                                  `Xnl Reveal: Reflection found in URL: ${
+                                    window.location.href
+                                  }. Reflected Parameters: ${reflectedParameters.join(
+                                    ", "
+                                  )}`
+                                );
+                              }
+                              // Remove the status bar once all requests are processed
+                              statusBar.remove();
+                            }
+                          })
+                          .catch((error) => {
+                            console.error("Xnl Reveal: Fetch error:", error); // Handle fetch errors here
+
+                            // Increment the successful requests counter even for failed requests
+                            successfulRequests++;
+
+                            // Check if we have processed all parameters
+                            if (successfulRequests === params.size) {
+                              statusBar.remove(); // Remove the status bar once all requests are processed
+                            }
+                          });
+                      }
+                    }
+                  );
+                });
+              }
+            }
+          });
         }
       } catch (error) {
         // Handle other errors here
@@ -447,16 +516,21 @@ browser.storage.sync.get(
         extensionDisabled === "false" &&
         (hiddenDisabled === "false" || disabledDisabled === "false")
       ) {
-        setTimeout(() => {
-          // Show hidden fields if the option is checked
-          if (hiddenDisabled === "false") {
-            showHiddenElements();
+        // Call isHostInScope with a callback to handle the result
+        isHostInScope((inScope) => {
+          if (inScope) {
+            setTimeout(() => {
+              // Show hidden fields if the option is checked
+              if (hiddenDisabled === "false") {
+                showHiddenElements();
+              }
+              // Enable disabled fields if the option is checked
+              if (disabledDisabled === "false") {
+                enableDisabledElements();
+              }
+            }, Number(checkDelay) * 1000);
           }
-          // Enable disabled fields if the option is checked
-          if (disabledDisabled === "false") {
-            enableDisabledElements();
-          }
-        }, Number(checkDelay) * 1000);
+        });
       }
     } catch (error) {
       // Handle other errors here

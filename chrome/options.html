@@ -35,8 +35,43 @@
           Wayback RegEx: 
           <input type="text" id="waybackRegexInput" placeholder="e.g. for JS files:  \.js($|#|\?|\.)"/>
         </label>
+        <fieldset>
+          <legend>Extension Scope</legend>
+  
+          <div class="radiogroup" role='radiogroup'>
+            <div class="radiobutton">
+              <label class="form-control">
+                <input type="radio" id="scopeTypeWhite" />
+                Whitelist
+              </label>
+            </div>
+            <div class="radiobutton">
+              <label class="form-control">
+                <input type="radio" id="scopeTypeBlack" />
+                Blacklist
+              </label>
+            </div>
+          </div>
+          <div class="add-container">
+            <form>
+              <label>
+                <div>Host match word to add</div>
+                <input type="text" id="newScope"/>
+              </label>
+              <button type="submit" class="addScopeButton" id="addScopeButton">Add</button>
+            </form>
+          </div>
+          <select multiple size="6" name="scopeList" id="scopeList">
 
+          </select>
+  
+          <div class="button-group">
+            <button type="button" id="removeSelectedScope">Remove selected</button>
+            <button type="button" id="clearAllScope">Clear all</button>
+          </div>
+        </fieldset>
       </form>
+      &nbsp;
       <div class="button-group">
         <button type="submit" id="saveButton">Save</button>
         <button type="button" id="clearStorageButton">Clear saved URLs / params</button>

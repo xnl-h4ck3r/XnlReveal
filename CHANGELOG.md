@@ -1,5 +1,11 @@
 ## Changelog
 
+- v2.0
+
+  - New
+
+    - Add the ability to specify what scope **Xnl Reveal** will run for, if enabled. This adds the ability to either whitelist or blacklist certain words in the host of the current tab to determine whether to process the page or not.
+
 - v1.2
 
   - New

@@ -5,6 +5,16 @@ const saveCanaryTokenButton = document.getElementById("saveButton");
 const clearStorageButton = document.getElementById("clearStorageButton");
 const clearStorageMessage = document.getElementById("clearStorageMessage");
 
+const scopeTypeWhiteRadio = document.getElementById("scopeTypeWhite");
+const scopeTypeBlackRadio = document.getElementById("scopeTypeBlack");
+const newScopeInput = document.getElementById("newScope");
+const addScopeButton = document.getElementById("addScopeButton");
+const scopeListSelect = document.getElementById("scopeList");
+const removeSelectedScopeButton = document.getElementById(
+  "removeSelectedScope"
+);
+const clearAllScopeButton = document.getElementById("clearAllScope");
+
 document.addEventListener("DOMContentLoaded", function () {
   const checkDelayInput = document.getElementById("checkDelayInput");
 
@@ -23,6 +33,70 @@ chrome.storage.sync.get(["checkDelay"], (result) => {
 });
 chrome.storage.sync.get(["waybackRegex"], (result) => {
   waybackRegexInput.value = result.waybackRegex || "";
+});
+chrome.storage.sync.get(["scopeItems"], (result) => {
+  const savedScope = result.scopeItems || [];
+  savedScope.forEach((item) => {
+    let newOption = new Option(item, item);
+    scopeListSelect.add(newOption, undefined);
+  });
+});
+
+// Function to retrieve the selected radio button value from Chrome storage
+chrome.storage.sync.get(["scopeType"], (result) => {
+  const selectedValue = result.scopeType || "whitelist";
+  if (selectedValue === "whitelist") {
+    scopeTypeWhiteRadio.checked = true;
+    scopeTypeBlackRadio.checked = false;
+  } else if (selectedValue === "blacklist") {
+    scopeTypeBlackRadio.checked = true;
+    scopeTypeWhiteRadio.checked = false;
+  }
+});
+
+// Add event listeners to the radio buttons
+scopeTypeWhiteRadio.addEventListener("change", function () {
+  if (scopeTypeWhiteRadio.checked) {
+    scopeTypeBlackRadio.checked = false; // Uncheck the other radio button
+  }
+});
+scopeTypeBlackRadio.addEventListener("change", function () {
+  if (scopeTypeBlackRadio.checked) {
+    scopeTypeWhiteRadio.checked = false; // Uncheck the other radio button
+  }
+});
+
+// Add a click event listener to add something to the scope
+addScopeButton.addEventListener("click", (e) => {
+  e.preventDefault(); // Prevent the default form submission behavior
+  if (newScopeInput.value != "") {
+    let newOption = new Option(newScopeInput.value, newScopeInput.value);
+    scopeListSelect.add(newOption, undefined);
+    // Set the size attribute to 6 to keep a fixed size
+    scopeListSelect.size = 6;
+  }
+  newScopeInput.value = "";
+});
+
+// Add a click event listener to remove something from the scope
+removeSelectedScopeButton.addEventListener("click", (e) => {
+  e.preventDefault(); // Prevent the default form submission behavior
+  const selectedOptions = Array.from(scopeListSelect.selectedOptions);
+  selectedOptions.forEach((option) => {
+    scopeListSelect.remove(option.index);
+  });
+  // Set the size attribute to 6 to keep a fixed size
+  scopeListSelect.size = 6;
+});
+
+// Add a click event listener to clear all items from the scope
+clearAllScopeButton.addEventListener("click", (e) => {
+  e.preventDefault(); // Prevent the default form submission behavior
+  while (scopeListSelect.options.length > 0) {
+    scopeListSelect.remove(0); // Remove the first option until the list is empty
+  }
+  // Set the size attribute to 6 to keep a fixed size
+  scopeListSelect.size = 6;
 });
 
 // Function to display a message
@@ -53,9 +127,19 @@ saveButton.addEventListener("click", (e) => {
     waybackRegexInput.value = waybackRegex;
   }
 
+  // Save all options
   chrome.storage.sync.set({ canaryToken });
   chrome.storage.sync.set({ checkDelay });
   chrome.storage.sync.set({ waybackRegex });
+  if (scopeTypeWhiteRadio.checked) {
+    chrome.storage.sync.set({ scopeType: "whitelist" });
+  } else {
+    chrome.storage.sync.set({ scopeType: "blacklist" });
+  }
+  const scopeItems = Array.from(scopeListSelect.options).map(
+    (option) => option.value
+  );
+  chrome.storage.sync.set({ scopeItems });
 
   showMessage("Options successfully saved!");
 });

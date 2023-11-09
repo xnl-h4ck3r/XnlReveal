@@ -37,7 +37,31 @@ browser.contextMenus.onClicked.addListener(function (clickData) {
 });
 
 browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-  // Check if the background is ready before processing messages
+  if (request.action === "getTabInfo") {
+    browser.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+      if (browser.runtime.lastError) {
+        console.error(
+          "Xnl Reveal: An error occurred while querying tabs:",
+          browser.runtime.lastError
+        );
+        sendResponse({ error: browser.runtime.lastError });
+        return;
+      }
+
+      if (tabs && tabs[0]) {
+        const currentHost = new URL(tabs[0].url).host;
+
+        // Handle the tab information and send it back to the content script
+        sendResponse({ currentHost });
+      } else {
+        console.error("Xnl Reveal: No active tab found");
+        sendResponse({ error: "Xnl Reveal: No active tab found" });
+      }
+    });
+
+    // Indicate that you will respond asynchronously
+    return true;
+  }
   if (request.action === "fetchWaybackData") {
     const currentURL = request.location; // Get the current URL from the content script
 
