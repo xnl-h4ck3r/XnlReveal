@@ -62,10 +62,10 @@ You have the following options:
 
 - `Canary token` - When requests are made to test for reflection of query parameters, this is the value of the parameter that is used and checked for.
 - `Check delay` - When a page is loaded, depending on settings, the extension will try to show hidden elements and enable disabled elements. However, sometimes parts of the page are loaded dynamically and they aren't in the original response. THe extension will try to show and enable again after this delay (in seconds) after the page has initially loaded.
-- `Wayback RegEx` - If the setting to write Wayback archive endpoints has been selected, then only wayback endpoints that match the entered RegEx will be displayed in the console. If the field is left blank, then all Wayback endpoints are returned.
+- `Wayback RegEx` - If the setting to write Wayback archive endpoints has been selected, then only wayback endpoints that match the entered RegEx will be displayed in the console. If the field is left blank, then all Wayback endpoints are returned. **IMPORTANT: Any RegEx entered will be treated as case insensitive**
 - `Extension Scope` options:
   - `Whitelist` or `Blacklist` - This determines
-  - `Host match word to add` - Enter a word that exists in the host name (or a full hostname) that you want to either whitelist or blacklist, and click the **Add** button to add to the scope list.
+  - `Host match word to add` - Enter a word that exists in the host name (or a full hostname) that you want to either whitelist or blacklist, and click the **Add** button to add to the scope list. For example, if you only want to run on Redbull pages, just add `redbull` and set as a whitelist.
   - `Add` - Add a entered word to the scope list.
   - `Remove selected` - Remove the selected word(s) from the scope list.
   - `Clear all` - Remove all words from the scope list.
