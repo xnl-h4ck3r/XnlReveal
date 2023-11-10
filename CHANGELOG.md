@@ -4,7 +4,7 @@
 
   - New
 
-    - Include a context menu item to add the current tabs host to the whitelist/blacklist. If the options have whitelist selected, it will say `Add example.com to whitelist` if the word `example.com` does not exist in the scope list already, otherwise it will say `Remove example.com from whitelist`. If the option of blacklist is selected in options, then it will say `blacklist` instead.
+    - Include a context menu item to add/remove the current tabs host to the whitelist/blacklist. If the options have whitelist selected, it will say `Add example.com to whitelist` if the word `example.com` does not exist in the scope list already, otherwise it will say `Remove example.com from whitelist`. If the option of blacklist is selected in options, then it will say `blacklist` instead.
 
 - v2.0
 
