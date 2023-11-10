@@ -1,6 +1,6 @@
 <center><img src="https://github.com/xnl-h4ck3r/XnlReveal/blob/main/images/title.png"></center>
 
-## About - v2.0
+## About - v2.1
 
 This is a **Chrome/Firefox Extension** that can do the following:
 
@@ -98,6 +98,7 @@ These options are available even if the `ENABLE REVEAL` option in the **Popup Me
 - `Get wayback endpoints` - If this is clicked, a new tab will be opened that will contain Wayback archive endpoints for the domain of the window it is clicked on. This isn't affected by any other settings and can be run even if the extension isn;t enabled.
 - `Show hidden elements` - This will show all hidden elements on the current page, in the same way as the `Show hidden elements` does, but the extension doesn't need to be enabled.
 - `Enable disabled elements` - TThis will enable all disabled elements on the current page, in the same way as the `Enable disabled elements` does, but the extension doesn't need to be enabled.
+- `{Add|Remove} {HOST} {from|to} {whitelist|blacklist}` - Depending on whether the host name of the current tab is in teh scope list already, and whether the option of whitelist or blacklist is selected, you will will get a menu item to add/remove it. For example, if you are on https://www.redbull.com/gb-en/ and you have `Blacklist` selected on the **Options** page, and `redbull.com` is not in the scope list, you will see the context menu item of `Add redbull.com to blacklist`. **IMPORTANT: If the menu item does not show the correct host, you may need to refresh the tab**.
 
 ## Important
 

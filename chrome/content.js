@@ -17,6 +17,9 @@ const IGNORED_STRINGS = "googletagmanager|doubleclick|google-analytics";
 
 // Listen for messages from the popup or background script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === "dynamicScopeMenuItem") {
+    dynamicScopeMenuItem(message.scopeAction, message.scopeHost);
+  }
   if (message.action === "showWaybackEndpoints") {
     showWaybackEndpoints();
   }
@@ -34,6 +37,42 @@ function htmlEntities(str) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+// Function to add or remove a host to the scope list
+function dynamicScopeMenuItem(action, host) {
+  // Get the current scopeItems from storage
+  chrome.storage.sync.get(["scopeItems"], (result) => {
+    const scopeItems = result.scopeItems || [];
+
+    if (action === "Add") {
+      // Add the host to scopeItems if it's not already in the list
+      if (!scopeItems.includes(host)) {
+        scopeItems.push(host);
+      }
+    } else if (action === "Remove") {
+      // Remove the host from scopeItems if it exists
+      const index = scopeItems.indexOf(host);
+      if (index !== -1) {
+        scopeItems.splice(index, 1);
+      }
+    }
+
+    // Save the updated scopeItems back to storage
+    chrome.storage.sync.set({ scopeItems }, () => {
+      if (chrome.runtime.lastError) {
+        console.error("Error saving scopeItems:", chrome.runtime.lastError);
+      } else {
+        console.log(
+          `Xnl Reveal: Scope - successfully ${
+            action === "Add" ? "added" : "removed"
+          } ${host}.`
+        );
+      }
+    });
+  });
+  // Send a message to the background script to request tab information to update the menu
+  chrome.runtime.sendMessage({ action: "getTabInfo" });
 }
 
 // Function to show all wayback endpoints for the domain in a separate window
@@ -319,7 +358,6 @@ chrome.storage.sync.get(
                 callback(true);
                 return;
               }
-              console.log(`HOST: ${currentHost}`);
               // Check if any scope items match the current host
               const isMatch = scopeItems.some((item) =>
                 currentHost.includes(item)
@@ -349,6 +387,9 @@ chrome.storage.sync.get(
 
     function runAfterPageLoad() {
       try {
+        // Send a message to the background script to request tab information
+        chrome.runtime.sendMessage({ action: "getTabInfo" });
+
         // Check if the extension is enabled, an option is selected, and the current tab is in scope
         if (
           extensionDisabled === "false" &&
@@ -505,6 +546,9 @@ chrome.storage.sync.get(
     } else {
       // If it hasn't, add an event listener for the DOMContentLoaded event
       document.addEventListener("DOMContentLoaded", runAfterPageLoad);
+
+      // Send a message to the background script to remove the scope menu
+      chrome.runtime.sendMessage({ action: "removeScopeMenu" });
     }
 
     // Check if the extension is enabled and an option is selected. This will run again after the delay to catch dynamic content

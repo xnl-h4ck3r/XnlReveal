@@ -17,6 +17,9 @@ const IGNORED_STRINGS = "googletagmanager|doubleclick|google-analytics";
 
 // Listen for messages from the popup or background script
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === "dynamicScopeMenuItem") {
+    dynamicScopeMenuItem(message.scopeAction, message.scopeHost);
+  }
   if (message.action === "showWaybackEndpoints") {
     showWaybackEndpoints();
   }
@@ -34,6 +37,42 @@ function htmlEntities(str) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+// Function to add or remove a host to the scope list
+function dynamicScopeMenuItem(action, host) {
+  // Get the current scopeItems from storage
+  browser.storage.sync.get(["scopeItems"], (result) => {
+    const scopeItems = result.scopeItems || [];
+
+    if (action === "Add") {
+      // Add the host to scopeItems if it's not already in the list
+      if (!scopeItems.includes(host)) {
+        scopeItems.push(host);
+      }
+    } else if (action === "Remove") {
+      // Remove the host from scopeItems if it exists
+      const index = scopeItems.indexOf(host);
+      if (index !== -1) {
+        scopeItems.splice(index, 1);
+      }
+    }
+
+    // Save the updated scopeItems back to storage
+    browser.storage.sync.set({ scopeItems }, () => {
+      if (browser.runtime.lastError) {
+        console.error("Error saving scopeItems:", browser.runtime.lastError);
+      } else {
+        console.log(
+          `Xnl Reveal: Scope - successfully ${
+            action === "Add" ? "added" : "removed"
+          } ${host}.`
+        );
+      }
+    });
+  });
+  // Send a message to the background script to request tab information to update the menu
+  browser.runtime.sendMessage({ action: "getTabInfo" });
 }
 
 // Function to show all wayback endpoints for the domain in a separate window
@@ -352,6 +391,9 @@ browser.storage.sync.get(
 
     function runAfterPageLoad() {
       try {
+        // Send a message to the background script to request tab information
+        browser.runtime.sendMessage({ action: "getTabInfo" });
+
         // Check if the extension is enabled and an option is selected
         if (
           extensionDisabled === "false" &&
@@ -508,6 +550,9 @@ browser.storage.sync.get(
     } else {
       // If it hasn't, add an event listener for the DOMContentLoaded event
       document.addEventListener("DOMContentLoaded", runAfterPageLoad);
+
+      // Send a message to the background script to remove the scope menu
+      browser.runtime.sendMessage({ action: "removeScopeMenu" });
     }
 
     // Check if the extension is enabled and an option is selected. This will run again after the delay to catch dynamic content
