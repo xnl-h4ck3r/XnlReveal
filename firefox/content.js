@@ -307,7 +307,9 @@ browser.storage.sync.get(
                         console.log(jsLines.join("\n").trim());
                       }
                     } else {
-                      console.log(waybackData);
+                      if (waybackData.trim() != "") {
+                        console.log(waybackData.trim());
+                      }
                     }
                   }
                 }
@@ -389,6 +391,16 @@ browser.storage.sync.get(
       );
     }
 
+    // Function to replace parameter values with replacement arg in the URL
+    function replaceParameterValues(url, replacement) {
+      const urlObject = new URL(url);
+      const params = urlObject.searchParams;
+      for (const key of params.keys()) {
+        params.set(key, replacement);
+      }
+      return urlObject.toString();
+    }
+
     function runAfterPageLoad() {
       try {
         // Send a message to the background script to request tab information
@@ -431,10 +443,19 @@ browser.storage.sync.get(
                   modifiedParams.set(key, canaryToken);
                   const modifiedURL = `${window.location.origin}${window.location.pathname}?${modifiedParams}`;
 
+                  // Create a modified URL with parameter values replaced with the canary token for storage. This will ensure the same url with different parameter values does not cause the alert to be fired again
+                  const modifiedURLForStorage = replaceParameterValues(
+                    window.location.href,
+                    canaryToken
+                  );
+
                   // Check if this URL and parameter have already triggered an alert
                   browser.storage.local.get(
-                    [window.location.href, key],
-                    ({ [window.location.href]: urlData, [key]: paramData }) => {
+                    [modifiedURLForStorage, key],
+                    ({
+                      [modifiedURLForStorage]: urlData,
+                      [key]: paramData,
+                    }) => {
                       if (!urlData || !paramData) {
                         // Initialize a timeout promise
                         const timeoutPromise = new Promise(
@@ -470,7 +491,7 @@ browser.storage.sync.get(
                             }
                             // Mark this URL and parameter as alerted
                             const alertData = {
-                              [window.location.href]: true,
+                              [modifiedURLForStorage]: true,
                               [key]: true,
                             };
                             browser.storage.local.set(alertData);

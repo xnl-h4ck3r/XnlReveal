@@ -1,5 +1,12 @@
 ## Changelog
 
+- v2.3
+
+  - Changed
+
+    - When the URL and parameters are stored to ensure the user doesn't get an alert for the same reflected parameter, it would still alert of the parameter value was different. The URL now has all parameter values set to the canary token in local storage so that even if the value is different, it won't fire an alert again or write the same message to the console.
+    - Don't write a blank line to the console if there were no results returned from Wayback archive.
+
 - v2.2
 
   - Changed
