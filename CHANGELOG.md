@@ -1,5 +1,11 @@
 ## Changelog
 
+- v2.2
+
+  - Changed
+
+    - Improvements to the UI
+
 - v2.1
 
   - New

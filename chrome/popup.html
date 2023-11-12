@@ -1,61 +1,93 @@
 <!DOCTYPE html>
- <html>
-  <head>
-    <link rel="stylesheet" href="xnl.css">
-    <style>
-      html {
-        height: 200px;
-        width: 570px;      
-      }
-      </style>
-  </head>
-  <body>
-    <main>
-      <label for="enable">
-        <h1 class="options-heading">Xnl Reveal</h1>
-      </label>
-  
-      <button class="toggle-button" role="switch" aria-checked="true" id="enableExtension">
-        <span>Disabled</span>
-        <span>Enabled</span>
-      </button>
-      <div class="container options">
-  
-        <fieldset class="fieldset" id="optionsFieldSet">
-          <legend>Actions</legend>
-          <ul class="options-list">
-            <li>
-              <label for="opt1">Show query param reflection alerts</label>
-              <button class="toggle-button" role="switch" aria-checked="false" id="enableAlerts">
-                <span>Off</span>
-                <span>On</span>
-              </button>
-            </li>
-            <li>
-              <label for="opt2">Write Wayback endpoints to console</label>
-              <button class="toggle-button" role="switch" aria-checked="false" id="enableWayback">
-                <span>Off</span>
-                <span>On</span>
-              </button>
-            </li>
-            <li>
-              <label for="opt3">Show hidden elements</label>
-              <button class="toggle-button" role="switch" aria-checked="false" id="enableHidden">
-                <span>Off</span>
-                <span>On</span>
-              </button>
-            </li>
-            <li>
-              <label for="opt4">Enable disabled elements</label>
-              <button class="toggle-button" role="switch" aria-checked="false" id="enableDisabled">
-                <span>Off</span>
-                <span>On</span>
-              </button>
-            </li>
-          </ul>
-        </fieldset>
-      </div>
-    </main>
-  </body>
-  <script src="popup.js"></script>
- </html>
+<html>
+    <head>
+        <link rel="stylesheet" href="xnl.css" />
+        <style>
+            html {
+                height: 200px;
+                width: 570px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="body-wrapper">
+            <main class="popup-main">
+                <label for="enable">
+                    <h1 class="options-heading">Xnl Reveal</h1>
+                </label>
+
+                <button
+                    class="toggle-button"
+                    role="switch"
+                    aria-checked="true"
+                    id="enableExtension"
+                >
+                    <span>Disabled</span>
+                    <span>Enabled</span>
+                </button>
+                <div class="container options">
+                    <fieldset class="fieldset" id="optionsFieldSet">
+                        <legend>Actions</legend>
+                        <ul class="options-list">
+                            <li>
+                                <label for="opt1"
+                                    >Show query param reflection alerts</label
+                                >
+                                <button
+                                    class="toggle-button"
+                                    role="switch"
+                                    aria-checked="false"
+                                    id="enableAlerts"
+                                >
+                                    <span>Off</span>
+                                    <span>On</span>
+                                </button>
+                            </li>
+                            <li>
+                                <label for="opt2"
+                                    >Write Wayback endpoints to console</label
+                                >
+                                <button
+                                    class="toggle-button"
+                                    role="switch"
+                                    aria-checked="false"
+                                    id="enableWayback"
+                                >
+                                    <span>Off</span>
+                                    <span>On</span>
+                                </button>
+                            </li>
+                            <li>
+                                <label for="opt3">Show hidden elements</label>
+                                <button
+                                    class="toggle-button"
+                                    role="switch"
+                                    aria-checked="false"
+                                    id="enableHidden"
+                                >
+                                    <span>Off</span>
+                                    <span>On</span>
+                                </button>
+                            </li>
+                            <li>
+                                <label for="opt4"
+                                    >Enable disabled elements</label
+                                >
+                                <button
+                                    class="toggle-button"
+                                    role="switch"
+                                    aria-checked="false"
+                                    id="enableDisabled"
+                                >
+                                    <span>Off</span>
+                                    <span>On</span>
+                                </button>
+                            </li>
+                        </ul>
+                    </fieldset>
+                </div>
+            </main>
+        </div>
+    </body>
+    <script src="popup.js"></script>
+</html>

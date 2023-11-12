@@ -1,83 +1,87 @@
 <!DOCTYPE html>
- <html>
-  <head>
-    <link rel="stylesheet" href="xnl.css">
-  </head>
-  <body>
-    <header>
-      <div class="title">
-        <h1 id="heading">Xnl Reveal</h1>
-        <div class="logo" role="image" aria-label="Xnl-h4ack3r logo"></div>
-        <div class="creator">Created by Xnl-h4ck3r</div>
-        <nav>
-          <ul>
-            <li><a href="https://github.com/xnl-h4ck3r/XnlReveal" target="_blank">Help</a></li>
-            <li><a class="twitter" target="_blank" href="https://x.com/xnl_h4ck3r" target="_blank">Twitter/X
-              </a></li>
-            <li><a href="https://github.com/xnl-h4ck3r" target="_blank">GitHub</a></li>
-            <li><a href="https://ko-fi.com/xnlh4ck3r" target="_blank">Buy me a coffee!</a></li>
-          </ul>
-        </nav>
-    </header>
-    <main>
-      <h2>Options</h2>
-      <form class="container2" aria-labelledby="heading">
-        <label>
-          Canary token: 
-          <input type="text"  id="canaryTokenInput"/>
-        </label>
-        <label>
-          Check delay: 
-          <input  id="checkDelayInput" maxlength="2" size="1" pattern="[0-9]" />
-          seconds
-        </label>
-        <label>
-          Wayback RegEx: 
-          <input type="text" id="waybackRegexInput" placeholder="e.g. for JS files:  \.js($|#|\?|\.)"/>
-        </label>
-        <fieldset>
-          <legend>Extension Scope</legend>
-  
-          <div class="radiogroup" role='radiogroup'>
-            <div class="radiobutton">
-              <label class="form-control">
-                <input type="radio" id="scopeTypeWhite" />
-                Whitelist
-              </label>
-            </div>
-            <div class="radiobutton">
-              <label class="form-control">
-                <input type="radio" id="scopeTypeBlack" />
-                Blacklist
-              </label>
-            </div>
-          </div>
-          <div class="add-container">
-            <form>
-              <label>
-                <div>Host match word to add</div>
-                <input type="text" id="newScope"/>
-              </label>
-              <button type="submit" class="addScopeButton" id="addScopeButton">Add</button>
-            </form>
-          </div>
-          <select multiple size="6" name="scopeList" id="scopeList">
+<html>
 
-          </select>
-  
-          <div class="button-group">
-            <button type="button" id="removeSelectedScope">Remove selected</button>
-            <button type="button" id="clearAllScope">Clear all</button>
-          </div>
-        </fieldset>
-      </form>
-      &nbsp;
-      <div class="button-group">
-        <button type="submit" id="saveButton">Save</button>
-        <button type="button" id="clearStorageButton">Clear saved URLs / params</button>
-      </div>
-      <div class="message" id="clearStorageMessage">&nbsp;</div>
-    </main>
-  </body>
-  <script src="options.js"></script>
- </html>
+<head>
+    <link rel="stylesheet" href="xnl.css">
+</head>
+
+<body>
+    <div class="body-wrapper">
+        <header>
+            <div class="title">
+                <h1 id="heading">Xnl Reveal</h1>
+                <div class="logo" role="image" aria-label="Xnl-h4ack3r logo"></div>
+                <div class="creator">Created by Xnl-h4ck3r</div>
+                <nav>
+                    <ul>
+                        <li><a href="https://github.com/xnl-h4ck3r/XnlReveal" target="_blank">Help</a></li>
+                        <li><a class="twitter" target="_blank" href="https://x.com/xnl_h4ck3r" target="_blank">Twitter/X
+                            </a></li>
+                        <li><a href="https://github.com/xnl-h4ck3r" target="_blank">GitHub</a></li>
+                        <li><a href="https://ko-fi.com/xnlh4ck3r" target="_blank">Buy me a coffee!</a></li>
+                    </ul>
+                </nav>
+        </header>
+        <main class="options-main">
+            <h2>Options</h2>
+            <form class="container2" aria-labelledby="heading">
+                <label>
+                    Canary token:
+                    <input type="text" id="canaryTokenInput" />
+                </label>
+                <label>
+                    Check delay:
+                    <input id="checkDelayInput" maxlength="2" size="1" pattern="[0-9]" />
+                    seconds
+                </label>
+                <label>
+                    Wayback RegEx:
+                    <input type="text" id="waybackRegexInput" placeholder="e.g. for JS files:  \.js($|#|\?|\.)" />
+                </label>
+                <fieldset>
+                    <legend>Extension Scope</legend>
+
+                    <div class="radiogroup" role='radiogroup'>
+                        <div class="radiobutton">
+                            <label class="form-control">
+                                <input type="radio" id="scopeTypeWhite" />
+                                Whitelist
+                            </label>
+                        </div>
+                        <div class="radiobutton">
+                            <label class="form-control">
+                                <input type="radio" id="scopeTypeBlack" />
+                                Blacklist
+                            </label>
+                        </div>
+                    </div>
+                    <div class="add-container">
+                        <form>
+                            <label>
+                                <div>Host match word to add</div>
+                                <input type="text" id="newScope" />
+                            </label>
+                            <button type="submit" class="addScopeButton" id="addScopeButton">Add</button>
+                        </form>
+                    </div>
+                    <select multiple size="6" name="scopeList" id="scopeList">
+
+                    </select>
+
+                    <div class="button-group">
+                        <button type="button" id="removeSelectedScope">Remove selected</button>
+                        <button type="button" id="clearAllScope">Clear all</button>
+                    </div>
+                </fieldset>
+            </form>
+            <div class="button-group">
+                <button type="submit" id="saveButton">Save</button>
+                <button type="button" id="clearStorageButton">Clear saved URLs / params</button>
+            </div>
+            <div class="message" id="clearStorageMessage">&nbsp;</div>
+        </main>
+    </div>
+</body>
+<script src="options.js"></script>
+
+</html>
