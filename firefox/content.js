@@ -29,6 +29,9 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "enableDisabledElements") {
     enableDisabledElements();
   }
+  if (message.action === "showGoogleCache") {
+    showGoogleCache();
+  }
 });
 
 function htmlEntities(str) {
@@ -91,6 +94,20 @@ function showWaybackEndpoints() {
     var newWindow = window.open(newURL, "_blank");
   } catch (error) {
     console.error("Xnl Reveal: Error in showWaybackEndpoints:", error);
+  }
+}
+
+// Function to google chached version of the page in a separate window
+function showGoogleCache() {
+  try {
+    var newURL =
+      "https://webcache.googleusercontent.com/search?q=cache:" +
+      window.location;
+
+    // open the window
+    var newWindow = window.open(newURL, "_blank");
+  } catch (error) {
+    console.error("Xnl Reveal: Error in showGoogleCache:", error);
   }
 }
 

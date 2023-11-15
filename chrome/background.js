@@ -18,6 +18,12 @@ let contextMenuDisabled = {
   contexts: ["all"],
 };
 
+let contextMenuGoogle = {
+  id: "showGoogleCache",
+  title: "Show Google cache version",
+  contexts: ["all"],
+};
+
 let scopeContextMenuAction = "";
 let scopeContextMenuHost = "";
 
@@ -73,6 +79,7 @@ chrome.contextMenus.removeAll(() => {
   chrome.contextMenus.create(contextMenuWayback);
   chrome.contextMenus.create(contextMenuHidden);
   chrome.contextMenus.create(contextMenuDisabled);
+  chrome.contextMenus.create(contextMenuGoogle);
 });
 
 chrome.contextMenus.onClicked.addListener(function (clickData) {

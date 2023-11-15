@@ -1,5 +1,11 @@
 ## Changelog
 
+- v2.5
+
+  - New
+
+    - Include a new context menu item of "Show Google cache version". If selected, a new tab will be opened with the Google Cache version of the page.
+
 - v2.4
 
   - Changed

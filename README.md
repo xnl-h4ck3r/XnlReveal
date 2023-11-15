@@ -1,6 +1,6 @@
 <center><img src="https://github.com/xnl-h4ck3r/XnlReveal/blob/main/images/title.png"></center>
 
-## About - v2.4
+## About - v2.5
 
 This is a **Chrome/Firefox Extension** that can do the following:
 
@@ -13,6 +13,8 @@ This is a **Chrome/Firefox Extension** that can do the following:
   - Open a new tab to show Wayback endpoints for the current domain.
   - Show any hidden elements on the page (even if the extension isn't enabled to do automatically).
   - Enable any disabled element on the page (even if the extension isn't enabled to do automatically).
+  - Open a new tab to show the Google Cache version of the current page.
+  - Add/Remove the current domain to the whitelist/blacklist.
 
 The ability to show an alert for reflected parameters was inspired by a comment by [@renniepak](https://x.com/renniepak) on Episode 42 of the [Critical Thinking - Bug Bounty Podcast](https://www.criticalthinkingpodcast.io/episode-42-renniepak-interview-intigriti-lhe-recap/) where he mentioned he had his own browser extension that let him know about any reflections.
 
@@ -97,7 +99,8 @@ These options are available even if the `ENABLE REVEAL` option in the **Popup Me
 
 - `Get wayback endpoints` - If this is clicked, a new tab will be opened that will contain Wayback archive endpoints for the domain of the window it is clicked on. This isn't affected by any other settings and can be run even if the extension isn;t enabled.
 - `Show hidden elements` - This will show all hidden elements on the current page, in the same way as the `Show hidden elements` does, but the extension doesn't need to be enabled.
-- `Enable disabled elements` - TThis will enable all disabled elements on the current page, in the same way as the `Enable disabled elements` does, but the extension doesn't need to be enabled.
+- `Enable disabled elements` - This will enable all disabled elements on the current page, in the same way as the `Enable disabled elements` does, but the extension doesn't need to be enabled.
+- `Show Google cache version` - If this is clicked, a new tab will be opened that will open the Google Cache version of the current page. Even if a website is no longer available, Google will have a copy stored in its archives, and you can still access the cached page.
 - `{Add|Remove} {HOST} {from|to} {whitelist|blacklist}` - Depending on whether the host name of the current tab is in teh scope list already, and whether the option of whitelist or blacklist is selected, you will will get a menu item to add/remove it. For example, if you are on https://www.redbull.com/gb-en/ and you have `Blacklist` selected on the **Options** page, and `redbull.com` is not in the scope list, you will see the context menu item of `Add redbull.com to blacklist`. **IMPORTANT: If the menu item does not show the correct host, you may need to refresh the tab**.
 
 ## Important
