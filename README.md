@@ -1,6 +1,6 @@
 <center><img src="https://github.com/xnl-h4ck3r/XnlReveal/blob/main/images/title.png"></center>
 
-## About - v2.5
+## About - v2.6
 
 This is a **Chrome/Firefox Extension** that can do the following:
 
@@ -63,6 +63,7 @@ Clone this repo to your machine and then follow the instructions below, dependin
 You have the following options:
 
 - `Canary token` - When requests are made to test for reflection of query parameters, this is the value of the parameter that is used and checked for.
+- `Copy reflection text to clipboard` - If this is selected, and `Show query param reflection alerts` is selected on the Popup menu (see below), when parameter reflections are found, the details are put in the users clipboard as-well as shown in the console and on an alert box. This means that as soon as you an alert box, you can go to your notes and paste the details straight away.
 - `Check delay` - When a page is loaded, depending on settings, the extension will try to show hidden elements and enable disabled elements. However, sometimes parts of the page are loaded dynamically and they aren't in the original response. THe extension will try to show and enable again after this delay (in seconds) after the page has initially loaded.
 - `Wayback RegEx` - If the setting to write Wayback archive endpoints has been selected, then only wayback endpoints that match the entered RegEx will be displayed in the console. If the field is left blank, then all Wayback endpoints are returned. **IMPORTANT: Any RegEx entered will be treated as case insensitive**
 - `Extension Scope` options:

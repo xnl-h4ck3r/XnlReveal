@@ -79,7 +79,7 @@ browser.contextMenus.removeAll(() => {
   browser.contextMenus.create(contextMenuWayback);
   browser.contextMenus.create(contextMenuHidden);
   browser.contextMenus.create(contextMenuDisabled);
-  chrome.contextMenus.create(contextMenuGoogle);
+  browser.contextMenus.create(contextMenuGoogle);
 });
 
 browser.contextMenus.onClicked.addListener(function (clickData) {
@@ -159,6 +159,7 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 browser.runtime.onInstalled.addListener(() => {
   // Set defaults on installation
   browser.storage.sync.set({ canaryToken: "xnlreveal" });
+  browser.storage.sync.set({ copyToClipboard: false });
   browser.storage.sync.set({ checkDelay: "2" });
   browser.storage.sync.set({ waybackRegex: "" });
 });

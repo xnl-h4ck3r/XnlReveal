@@ -1,4 +1,5 @@
 const canaryTokenInput = document.getElementById("canaryTokenInput");
+const copyToClipboardInput = document.getElementById("copyToClipboardInput");
 const checkDelayInput = document.getElementById("checkDelayInput");
 const waybackRegexInput = document.getElementById("waybackRegexInput");
 const saveCanaryTokenButton = document.getElementById("saveButton");
@@ -26,9 +27,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
 // Load the user's options
 browser.storage.sync
-  .get(["canaryToken", "checkDelay", "waybackRegex"])
+  .get(["canaryToken", "copyToClipboard", "checkDelay", "waybackRegex"])
   .then((result) => {
     canaryTokenInput.value = result.canaryToken || "xnlreveal";
+    copyToClipboardInput.checked = result.copyToClipboard || false;
     checkDelayInput.value = result.checkDelay || "2";
     waybackRegexInput.value = result.waybackRegex || "";
   });
@@ -111,6 +113,7 @@ saveButton.addEventListener("click", (e) => {
   e.preventDefault(); // Prevent the form from actually submitting
 
   let canaryToken = canaryTokenInput.value;
+  const copyToClipboard = copyToClipboardInput.checked;
   const checkDelay = checkDelayInput.value;
   let waybackRegex = waybackRegexInput.value;
 
@@ -127,7 +130,7 @@ saveButton.addEventListener("click", (e) => {
   }
 
   browser.storage.sync
-    .set({ canaryToken, checkDelay, waybackRegex })
+    .set({ canaryToken, copyToClipboard, checkDelay, waybackRegex })
     .then(() => {
       showMessage("Options successfully saved!");
     })

@@ -221,6 +221,7 @@ function showHiddenElements() {
 chrome.storage.sync.get(
   [
     "canaryToken",
+    "copyToClipboard",
     "checkDelay",
     "waybackRegex",
     "extensionDisabled",
@@ -265,6 +266,12 @@ chrome.storage.sync.get(
       canaryToken = "xnlreveal";
     } else {
       canaryToken = result.canaryToken || "xnlreveal";
+    }
+    if (result.copyToClipboard === undefined) {
+      chrome.storage.sync.set({ ["copyToClipboard"]: false });
+      copyToClipboard = false;
+    } else {
+      copyToClipboard = result.copyToClipboard || false;
     }
     if (result.checkDelay === undefined) {
       chrome.storage.sync.set({ ["checkDelay"]: "2" });
@@ -408,10 +415,23 @@ chrome.storage.sync.get(
     function replaceParameterValues(url, replacement) {
       const urlObject = new URL(url);
       const params = urlObject.searchParams;
-      for (const key of params.keys()) {
+      for (let i = 0; i < params.keys().length; i++) {
+        const key = params.keys()[i];
         params.set(key, replacement);
       }
       return urlObject.toString();
+    }
+
+    // Function to copy test to the users clipboard
+    function copyToClipboardAsync(text) {
+      navigator.clipboard
+        .writeText(text)
+        .then(() => {})
+        .catch((error) => {
+          console.error(
+            `Xnl Reveal: Error copying to clipboard (${error}). Check that the site has permissions to access the clipboard in the browser`
+          );
+        });
     }
 
     function runAfterPageLoad() {
@@ -515,24 +535,26 @@ chrome.storage.sync.get(
                             // Check if we have processed all parameters and found reflections
                             if (successfulRequests === params.size) {
                               if (reflectedParameters.length > 0) {
+                                reflectionConsoleMsg = `Xnl Reveal: Reflection found in URL ${
+                                  window.location.href
+                                }\nReflected Parameters: ${reflectedParameters.join(
+                                  ", "
+                                )}`;
+                                reflectionAlertMsg = `Xnl Reveal:\n\nReflection found in URL ${
+                                  window.location.href
+                                }\n\nReflected Parameters: ${reflectedParameters.join(
+                                  ", "
+                                )}`;
+                                // Write the info to the console too
+                                console.log(reflectionConsoleMsg);
                                 // Display an alert with the parameter names that reflect
                                 if (alertsDisabled === "false") {
-                                  alert(
-                                    `Reflection found in URL: ${
-                                      window.location.href
-                                    }\n\nReflected Parameters: ${reflectedParameters.join(
-                                      ", "
-                                    )}`
-                                  );
+                                  // Copy the info to the clipboard if required
+                                  if (copyToClipboard) {
+                                    copyToClipboardAsync(reflectionConsoleMsg);
+                                  }
+                                  alert(reflectionAlertMsg);
                                 }
-                                // Write the info to the console too
-                                console.log(
-                                  `Xnl Reveal: Reflection found in URL: ${
-                                    window.location.href
-                                  }. Reflected Parameters: ${reflectedParameters.join(
-                                    ", "
-                                  )}`
-                                );
                               }
                               // Remove the status bar once all requests are processed
                               statusBar.remove();

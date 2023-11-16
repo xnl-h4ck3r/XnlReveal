@@ -1,5 +1,17 @@
 ## Changelog
 
+- v2.6
+
+  - New
+
+    - Add `Copy reflection text to clipboard` to the **Options** page. If it is selected, and the option to show alerts is selected, then the text written to the console when parameter reflections are found is also copied to the users clipboard.
+    - Add `clipboardWrite` to the extensions permissions in the manifest file.
+
+  - Changed
+
+    - Fix an error in the Firefox version that caused the reflection alerts to fail with the error `TypeError: params.keys() is not iterable`.
+    - Small UI improvements.
+
 - v2.5
 
   - New
