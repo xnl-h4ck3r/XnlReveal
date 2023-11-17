@@ -1,6 +1,6 @@
 <center><img src="https://github.com/xnl-h4ck3r/XnlReveal/blob/main/images/title.png"></center>
 
-## About - v2.6
+## About - v2.7
 
 This is a **Chrome/Firefox Extension** that can do the following:
 
@@ -92,7 +92,7 @@ You have the following settings:
 
 ## Context Menu
 
-If you right click on a webpage, you will get the browser context menu:
+If you right click on a webpage, you will get the browser context menu, e.g. if you are on `example.com` you'll see this and have Whitelist selected in the **Options**, you'll see this:
 
 <center><img src="https://github.com/xnl-h4ck3r/XnlReveal/blob/main/images/context.png"></center>
 

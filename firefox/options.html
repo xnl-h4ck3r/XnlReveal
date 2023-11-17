@@ -27,19 +27,28 @@
             <form class="container2" aria-labelledby="heading">
                 <label>
                     Canary token:
-                    <input type="text" id="canaryTokenInput" />
+                    <input type="text" id="canaryTokenInput"  spellcheck="false"/>
                 </label>
-                <label>Copy reflection text to clipboard: 
-                    <input type="checkbox" id="copyToClipboardInput">
+                <label class="toggle-button-with-label">
+                    <span>Copy reflection text to clipboard:</span>
+                    <input
+                        type="checkbox"
+                        class="hidden-toggle"
+                        id="copyToClipboardInput"
+                    />
+                    <span class="toggle-button">
+                        <span>Off</span>
+                        <span>On</span>
+                    </span>
                 </label>
                 <label>
                     Check delay:
-                    <input id="checkDelayInput" maxlength="2" size="1" pattern="[0-9]" />
+                    <input id="checkDelayInput" maxlength="2" size="1" pattern="[0-9]"  spellcheck="false"/>
                     seconds
                 </label>
                 <label>
                     Wayback RegEx:
-                    <input type="text" id="waybackRegexInput" placeholder="e.g. \.js($|#|\?|\.)" />
+                    <input type="text" id="waybackRegexInput" placeholder="e.g. \.js($|#|\?|\.)"  spellcheck="false"/>
                 </label>
                 <fieldset>
                     <legend>Extension Scope</legend>
@@ -62,7 +71,7 @@
                         <form>
                             <label>
                                 <div>Host match word to add</div>
-                                <input type="text" id="newScope" />
+                                <input type="text" id="newScope"  spellcheck="false"/>
                             </label>
                             <button type="submit" class="addScopeButton" id="addScopeButton">Add</button>
                         </form>

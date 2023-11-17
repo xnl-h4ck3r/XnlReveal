@@ -675,7 +675,7 @@ button {
 }
 
 input {
-    font-size: inherit;
+    font-size: 1rem;
     flex-grow: 0;
     flex-shrink: 1;
 }
@@ -686,10 +686,11 @@ h1 {
     text-align: center;
     font-family: "Ubuntu";
     color: #30d935;
+    margin-bottom: 0.2em;
 }
 
 select {
-    font-size: inherit;
+    font-size: 1rem;
     width: 100%;
     display: block;
 }
@@ -713,10 +714,11 @@ option:hover {
 
 label {
     color: green;
+    font-size: 1rem;
 }
 
 label div {
-    margin-bottom: 0.2em;
+    margin-bottom: 0.3em;
 }
 
 button {
@@ -726,7 +728,6 @@ button {
     border: 1px solid green;
     font-size: 1rem;
     padding-inline: 1em;
-    padding-block: 0.5em;
     min-width: 5em;
     min-height: 2em;
     font-weight: 600;
@@ -748,10 +749,10 @@ button:disabled {
 
 input:not([type="radio"]) {
     padding-inline: 1em;
-    padding-block: 0.5em;
     border: 1px solid black;
     border-radius: 0.3em;
     min-height: 2em;
+    line-height: 1.5;
 }
 
 .button-group {
@@ -899,18 +900,19 @@ ul {
 li {
     display: block;
     margin: 1em 0;
-    font-size: 1.5em;
+    font-size: 1.5rem;
 }
 
 .title {
     display: flex;
     flex-direction: column;
+    gap: 1em;
 }
 
 .creator {
-    margin: 1em 0;
     align-self: center;
     text-align: center;
+    color: #30d935;
 }
 
 .options-list li {
@@ -918,11 +920,14 @@ li {
 }
 
 .toggle-button {
+    display: flex;
+    gap: 0.3em;
+    align-items: center;
     background: white;
     padding: 0.25rem;
     border: 0.25rem solid;
     border-radius: 0.3em;
-    font-size: inherit;
+    font-size: 1rem;
     border-color: green;
     color: black;
     min-height: 2em;
@@ -952,8 +957,8 @@ button.toggle-button:disabled {
 }
 
 .toggle-button[aria-checked] span {
-    font-size: 1em;
-    font-weight: bold;
+    font-size: 1rem;
+    font-weight: normal;
     display: inline-block;
     border-radius: 0.25rem;
     padding: 0.3em;
@@ -967,6 +972,7 @@ button.toggle-button:disabled {
 .toggle-button[aria-checked="true"] :first-child,
 .toggle-button[aria-checked="false"] :last-child {
     background-color: green;
+    font-weight: 700;
     border: 2px solid transparent;
     /* ↑ for WHCM users */
     color: white;
@@ -975,9 +981,84 @@ button.toggle-button:disabled {
 .toggle-button[aria-checked="true"]:disabled :first-child,
 .toggle-button[aria-checked="false"]:disabled :last-child {
     background-color: #333333;
+    font-weight: 700;
     border: 2px solid transparent;
     /* ↑ for WHCM users */
     color: lightgrey;
+}
+
+.toggle-button-with-label {
+    display: flex;
+    gap: 1em;
+    position: relative;
+    align-items: center;
+}
+
+.toggle-button-with-label .toggle-button {
+    border-width: 2px;
+    outline: 1px solid green;
+}
+
+.toggle-button-with-label .toggle-button span {
+    padding: 2px 0.2em;
+}
+
+.hidden-toggle {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    opacity: 0;
+    width: 100%!important;
+    height: 100%;
+    position: absolute!important;
+}
+
+.toggle-button > span {
+    padding: 0.3em;
+    border-radius: 0.2em;
+}
+
+.hidden-toggle:not(:checked):hover:not(:disabled) + .toggle-button :first-child,
+.hidden-toggle:checked:hover:not(:disabled) + .toggle-button :last-child {
+    background-color: #30d935;
+}
+
+.hidden-toggle:disabled + .toggle-button {
+    border-color: #333333;
+    background-color: grey;
+}
+
+.hidden-toggle:not(:checked):hover:not(:disabled) + .toggle-button :first-child,
+.hidden-toggle:checked:hover:not(:disabled) + .toggle-button :last-child {
+    background-color: #30d935;
+}
+
+.hidden-toggle:checked + .toggle-button :last-child,
+.hidden-toggle:not(:checked) + .toggle-button :first-child {
+    color: #757373;
+}
+
+.hidden-toggle:not(:checked) + .toggle-button :first-child,
+.hidden-toggle:checked + .toggle-button :last-child {
+    background-color: green;
+    font-weight: 700;
+    border: 2px solid transparent;
+    /* ↑ for WHCM users */
+    color: white;
+}
+
+.hidden-toggle:not(:checked):disabled + .toggle-button :first-child,
+.hidden-toggle:checked:disabled + .toggle-button :last-child {
+    background-color: #333333;
+    font-weight: 700;
+    border: 2px solid transparent;
+    /* ↑ for WHCM users */
+    color: lightgrey;
+}
+
+:focus + .toggle-button {
+    outline: max(2px, 0.15em) solid #ffa500;
+    outline-offset: max(2px, 0.15em);
 }
 
 fieldset {
@@ -1047,14 +1128,6 @@ form > label {
 #canaryTokenInput,
 #waybackRegexInput {
     flex-grow: 1;
-}
-
-main.popup-main > .toggle-button {
-    align-self: baseline;
-}
-
-main.popup-main h1 {
-    margin: 0;
 }
 
 main.popup-main fieldset {
