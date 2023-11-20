@@ -77,7 +77,7 @@ addScopeButton.addEventListener("click", (e) => {
     let newOption = new Option(newScopeInput.value, newScopeInput.value);
     scopeListSelect.add(newOption, undefined);
     // Set the size attribute to 6 to keep a fixed size
-    scopeListSelect.size = 6;
+    scopeListSelect.size = 5;
   }
   newScopeInput.value = "";
 });

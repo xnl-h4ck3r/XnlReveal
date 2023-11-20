@@ -32,6 +32,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "showGoogleCache") {
     showGoogleCache();
   }
+  if (message.action === "showFofaSearch") {
+    showFofaSearch();
+  }
 });
 
 function htmlEntities(str) {
@@ -97,7 +100,7 @@ function showWaybackEndpoints() {
   }
 }
 
-// Function to google chached version of the page in a separate window
+// Function to open google chached version of the page in a separate window
 function showGoogleCache() {
   try {
     var newURL =
@@ -108,6 +111,40 @@ function showGoogleCache() {
     var newWindow = window.open(newURL, "_blank");
   } catch (error) {
     console.error("Xnl Reveal: Error in showGoogleCache:", error);
+  }
+}
+
+// Function to get the root domain from a hostname
+function rootDomain(hostname) {
+  let parts = hostname.split(".");
+  if (parts.length <= 2)
+    return hostname;
+  
+  parts = parts.slice(-3);
+  if (['co','com'].indexOf(parts[1]) > -1)
+    return parts.join('.');
+  
+  return parts.slice(-2).join('.');
+}
+
+// Function to open FOFA search for domain in a separate window
+function showFofaSearch() {
+  try {
+
+    // Get the current root domain
+    domain = rootDomain(window.location.hostname);
+
+    // Get the base64 encoded and URL encoded version of the domain
+    base64Domain = encodeURIComponent(btoa("domain="+domain));
+
+    var newURL =
+      "https://en.fofa.info/result?qbase64=" +
+      base64Domain;
+
+    // open the window
+    var newWindow = window.open(newURL, "_blank");
+  } catch (error) {
+    console.error("Xnl Reveal: Error in showFofaSearch:", error);
   }
 }
 

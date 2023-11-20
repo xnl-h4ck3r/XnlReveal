@@ -1033,8 +1033,8 @@ button.toggle-button:disabled {
     background-color: #30d935;
 }
 
-.hidden-toggle:checked + .toggle-button :last-child,
-.hidden-toggle:not(:checked) + .toggle-button :first-child {
+.hidden-toggle:not(:checked) + .toggle-button :last-child,
+.hidden-toggle:checked + .toggle-button :first-child {
     color: #757373;
 }
 

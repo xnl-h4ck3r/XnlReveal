@@ -97,7 +97,7 @@ clearAllScopeButton.addEventListener("click", (e) => {
     scopeListSelect.remove(0); // Remove the first option until the list is empty
   }
   // Set the size attribute to 6 to keep a fixed size
-  scopeListSelect.size = 6;
+  scopeListSelect.size = 5;
 });
 
 // Function to display a message

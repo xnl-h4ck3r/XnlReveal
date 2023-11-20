@@ -1,4 +1,36 @@
 const { tabs, contextMenus, storage, runtime } = browser;
+const checkIntervalMinutes = 10;
+const alarmName = "checkWaybackStatus";
+
+// Function to update the extension icon based on the response status
+function updateIcon(responseStatus) {
+  if (iconPath = responseStatus === 200) {
+    browser.action.setIcon({ path: { 16: "images/icon16.png", 48: "images/icon48.png", 128: "images/icon128.png" } });
+  } else {
+    browser.action.setIcon({ path: { 16: "images/iconnoway16.png", 48: "images/iconnoway48.png", 128: "images/iconnoway128.png" } });
+  }
+}
+
+function checkWaybackStatus() {
+  // Check if the Wayback CDX API is available
+  fetch('https://web.archive.org/cdx/search/cdx?url=AVAILABLEORNOT')
+    .then((response) => {
+      updateIcon(response.status);
+    })
+    .catch((error) => {
+      // Do nothing
+    });
+}
+
+// Set up the initial alarm
+browser.alarms.create(alarmName, { periodInMinutes: checkIntervalMinutes });
+
+// Add an event listener for the alarm
+browser.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === alarmName) {
+    checkWaybackStatus();
+  }
+});
 
 let contextMenuWayback = {
   id: "showWaybackEndpoints",
@@ -21,6 +53,12 @@ let contextMenuDisabled = {
 let contextMenuGoogle = {
   id: "showGoogleCache",
   title: "Show Google cache version",
+  contexts: ["all"],
+};
+
+let contextMenuFofa = {
+  id: "showFofaSearch",
+  title: "Show FOFA domain search",
   contexts: ["all"],
 };
 
@@ -80,6 +118,7 @@ browser.contextMenus.removeAll(() => {
   browser.contextMenus.create(contextMenuHidden);
   browser.contextMenus.create(contextMenuDisabled);
   browser.contextMenus.create(contextMenuGoogle);
+  browser.contextMenus.create(contextMenuFofa);
 });
 
 browser.contextMenus.onClicked.addListener(function (clickData) {
@@ -142,6 +181,7 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     fetch(newURL)
       .then((response) => response.text())
       .then((data) => {
+        updateIcon(response.status);
         // Process the Wayback data here
         sendResponse({ waybackData: data });
       })
@@ -162,4 +202,7 @@ browser.runtime.onInstalled.addListener(() => {
   browser.storage.sync.set({ copyToClipboard: false });
   browser.storage.sync.set({ checkDelay: "2" });
   browser.storage.sync.set({ waybackRegex: "" });
+
+  // Schedule the alarm on installation
+  browser.alarms.create(alarmName, { periodInMinutes: checkIntervalMinutes });
 });

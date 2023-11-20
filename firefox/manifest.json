@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "Xnl Reveal",
   "description": "Show alerts for reflected query params; Show Wayback endpoints; Show hidden elements; Enable disabled elements. See https://github.com/xnl-h4ck3r/XnlReveal for more details.",
-  "version": "2.7",
+  "version": "3.0",
   "background": {
     "scripts": [
       "background.js"
@@ -15,15 +15,16 @@
     "contextMenus",
     "webNavigation",
     "<all_urls>",
-    "clipboardWrite"
+    "clipboardWrite",
+    "alarms"
   ],
   "browser_action": {
     "browser_style": true,
     "default_popup": "popup.html",
     "default_icon": {
-      "16": "images/icon.png",
-      "48": "images/icon.png",
-      "128": "images/icon.png"
+      "16": "images/icon16.png",
+      "48": "images/icon48.png",
+      "128": "images/icon128.png"
     }
   },
   "options_ui": {
@@ -41,9 +42,12 @@
     }
   ],
   "icons": {
-    "16": "images/icon.png",
-    "48": "images/icon.png",
-    "128": "images/icon.png"
+    "16": "images/iconnoway16.png",
+    "48": "images/iconnoway48.png",
+    "128": "images/iconnoway128.png",
+    "16": "images/icon16.png",
+    "48": "images/icon48.png",
+    "128": "images/icon128.png"
   },
   "browser_specific_settings": {
     "gecko": {

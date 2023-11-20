@@ -1,5 +1,16 @@
 ## Changelog
 
+- v3.0
+
+  - New
+
+    - If the Wayback CDX Server API is not available, then the extension icon will appear with a red background instead of black to indicate it is down. It will be checked every 10 minutes and the icon updated as necessary (the extension does not need to be enabled for this functionality) and will also be checked automatically when Wayback URLs are retrieved if option **Write wayback endpoints to console** is active.
+    - Add new context menu item "Show FOFA domain search". If selected, a new tab will be opened for https://en.fofa.info/ and the search `domain="{TARGET}"`, where `{TARGET}` is the domain of the active tab.
+
+  - Changed
+
+    - Small improvement to UI.
+
 - v2.7
 
   - Changed

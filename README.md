@@ -1,6 +1,6 @@
 <center><img src="https://github.com/xnl-h4ck3r/XnlReveal/blob/main/images/title.png"></center>
 
-## About - v2.7
+## About - v3.0
 
 This is a **Chrome/Firefox Extension** that can do the following:
 
@@ -14,11 +14,16 @@ This is a **Chrome/Firefox Extension** that can do the following:
   - Show any hidden elements on the page (even if the extension isn't enabled to do automatically).
   - Enable any disabled element on the page (even if the extension isn't enabled to do automatically).
   - Open a new tab to show the Google Cache version of the current page.
+  - Open a new tab to show the [FOFA](https://en.fofa.info/) search results for the current domain.
   - Add/Remove the current domain to the whitelist/blacklist.
+- Visually indicate if the **Wayback CDX Server API** is not available (regardless if extension is active).
 
 The ability to show an alert for reflected parameters was inspired by a comment by [@renniepak](https://x.com/renniepak) on Episode 42 of the [Critical Thinking - Bug Bounty Podcast](https://www.criticalthinkingpodcast.io/episode-42-renniepak-interview-intigriti-lhe-recap/) where he mentioned he had his own browser extension that let him know about any reflections.
 
 The ability to show hidden elements, and enable disabled elements, was inspired by this [Tweet by Critical Thinking - Bug Bounty Podcast](https://x.com/ctbbpodcast/status/1717151268622233614?s=20) and I initially created as browser bookmarks.
+
+The extension icon is normally shown with a black background <img src="chrome/images/icon16.png">, but if the icon appears with a red background <img src="chrome/images/iconnoway16.png">, then it indicates that the **Wayback CDX Server API** is probably unavailable. Even if the main features are disabled, the extension will check the status of the API every 10 minutes.<br>
+**IMPORTANT: When using tools like `waymore`, `waybackurls` or `gau` to get URLs from the Wayback archive, it uses the CDX Server API. If the API is down, you will not be getting any data from the Wayback Machine, only other sources. Also, only `waymore` would let you know that there was a problem.**
 
 ## Installing
 
@@ -102,6 +107,7 @@ These options are available even if the `ENABLE REVEAL` option in the **Popup Me
 - `Show hidden elements` - This will show all hidden elements on the current page, in the same way as the `Show hidden elements` does, but the extension doesn't need to be enabled.
 - `Enable disabled elements` - This will enable all disabled elements on the current page, in the same way as the `Enable disabled elements` does, but the extension doesn't need to be enabled.
 - `Show Google cache version` - If this is clicked, a new tab will be opened that will open the Google Cache version of the current page. Even if a website is no longer available, Google will have a copy stored in its archives, and you can still access the cached page.
+- `Show FOFA domain search` - If this is clicked, a new tab will be opened with [FOFA](https://en.fofa.info/) showing the search results for `domain="{TARGET}"`, where `{TARGET}` is the domain of the active tab.
 - `{Add|Remove} {HOST} {from|to} {whitelist|blacklist}` - Depending on whether the host name of the current tab is in teh scope list already, and whether the option of whitelist or blacklist is selected, you will will get a menu item to add/remove it. For example, if you are on https://www.redbull.com/gb-en/ and you have `Blacklist` selected on the **Options** page, and `redbull.com` is not in the scope list, you will see the context menu item of `Add redbull.com to blacklist`. **IMPORTANT: If the menu item does not show the correct host, you may need to refresh the tab**.
 
 ## Important
