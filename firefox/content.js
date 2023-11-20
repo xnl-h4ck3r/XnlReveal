@@ -586,6 +586,9 @@ browser.storage.sync.get(
                                 }\n\nReflected Parameters: ${reflectedParameters.join(
                                   ", "
                                 )}`;
+                                // Send a message to background.js to update the icon badge with the number of parameters found
+                                browser.runtime.sendMessage({ action: "updateBadge", number: reflectedParameters.length });
+
                                 // Write the info to the console too
                                 console.log(reflectionConsoleMsg);
                                 // Display an alert with the parameter names that reflect

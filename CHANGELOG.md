@@ -1,11 +1,21 @@
 ## Changelog
 
+- v3.2
+
+  - New
+
+    - Show a badge on the extension with the number of reflected parameters last found.
+
+  - Changed
+
+    - The check for whether the Wayback CDX Server API is up should was accidentally set to 1 minute for Firefox, but should have been 10 minutes.
+
 - v3.1 
 
   - New
 
     - Change the Tooltip of the extension to say `Xnl Reveal (Wayback down!)` if the Wayback CDX Server API is down, otherwise it will stay as `Xnl Reveal`
-    
+
 - v3.0
 
   - New

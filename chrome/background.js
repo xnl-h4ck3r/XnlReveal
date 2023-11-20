@@ -139,10 +139,13 @@ chrome.contextMenus.onClicked.addListener(function (clickData) {
 
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   if (request.action === "removeScopeMenu") {
+    chrome.action.setBadgeText({text: ""}); // Reset the badge on the icon
     // Remove the existing scope context menu item
     removeContextMenu();
   }
   if (request.action === "getTabInfo") {
+    chrome.action.setBadgeText({text: ""}); // Reset the badge on the icon
+
     chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
       if (chrome.runtime.lastError) {
         console.error(
@@ -195,6 +198,13 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 
     // Return true to indicate that we will use sendResponse asynchronously
     return true;
+  }
+
+  // Set the badge on the extension icon to the number of reflected parameters found
+  if (request.action === "updateBadge") {
+    const num = request.number; // Get the number of reflected parameters
+    chrome.action.setBadgeText({text: String(num)});
+    chrome.action.setBadgeBackgroundColor({ color: 'green' });
   }
   return true;
 });

@@ -1,5 +1,5 @@
 const { tabs, contextMenus, storage, runtime } = browser;
-const checkIntervalMinutes = 1;
+const checkIntervalMinutes = 10;
 const alarmName = "checkWaybackStatus";
 
 // Function to update the extension icon based on the response status
@@ -139,10 +139,13 @@ browser.contextMenus.onClicked.addListener(function (clickData) {
 
 browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   if (request.action === "removeScopeMenu") {
+    browser.browserAction.setBadgeText({text: ""}); // Reset the badge on the icon
     // Remove the existing scope context menu item
     removeContextMenu();
   }
   if (request.action === "getTabInfo") {
+    browser.browserAction.setBadgeText({text: ""}); // Reset the badge on the icon
+
     browser.tabs.query({ active: true, currentWindow: true }, function (tabs) {
       if (browser.runtime.lastError) {
         console.error(
@@ -194,6 +197,12 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 
     // Return true to indicate that we will use sendResponse asynchronously
     return true;
+  }
+  // Set the badge on the extension icon to the number of reflected parameters found
+  if (request.action === "updateBadge") {
+    const num = request.number; // Get the number of reflected parameters
+    browser.browserAction.setBadgeText({text: String(num)});
+    browser.browserAction.setBadgeBackgroundColor({ color: 'green' });
   }
   return true;
 });
