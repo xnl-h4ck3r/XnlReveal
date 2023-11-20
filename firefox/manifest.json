@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "Xnl Reveal",
   "description": "Show alerts for reflected query params; Show Wayback endpoints; Show hidden elements; Enable disabled elements. See https://github.com/xnl-h4ck3r/XnlReveal for more details.",
-  "version": "3.0",
+  "version": "3.1",
   "background": {
     "scripts": [
       "background.js"

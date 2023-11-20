@@ -1,13 +1,15 @@
 const { tabs, contextMenus, storage, runtime } = browser;
-const checkIntervalMinutes = 10;
+const checkIntervalMinutes = 1;
 const alarmName = "checkWaybackStatus";
 
 // Function to update the extension icon based on the response status
 function updateIcon(responseStatus) {
-  if (iconPath = responseStatus === 200) {
-    browser.action.setIcon({ path: { 16: "images/icon16.png", 48: "images/icon48.png", 128: "images/icon128.png" } });
+  if (responseStatus === 200) {
+    browser.browserAction.setIcon({ path: { 16: "images/icon16.png", 48: "images/icon48.png", 128: "images/icon128.png" } });
+    browser.browserAction.setTitle({title: "Xnl Reveal"});
   } else {
-    browser.action.setIcon({ path: { 16: "images/iconnoway16.png", 48: "images/iconnoway48.png", 128: "images/iconnoway128.png" } });
+    browser.browserAction.setIcon({ path: { 16: "images/iconnoway16.png", 48: "images/iconnoway48.png", 128: "images/iconnoway128.png" } });
+    browser.browserAction.setTitle({title: "Xnl Reveal (Wayback down!)"});
   }
 }
 

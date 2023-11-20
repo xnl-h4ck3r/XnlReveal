@@ -1,5 +1,11 @@
 ## Changelog
 
+- v3.1 
+
+  - New
+
+    - Change the Tooltip of the extension to say `Xnl Reveal (Wayback down!)` if the Wayback CDX Server API is down, otherwise it will stay as `Xnl Reveal`
+    
 - v3.0
 
   - New
