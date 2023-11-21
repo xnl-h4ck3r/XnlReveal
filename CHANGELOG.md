@@ -1,5 +1,16 @@
 ## Changelog
 
+- v3.4
+
+  - New
+
+    - When reflected parameters are checked, the badge on the icon will be red instead of green if any of the parameter names are in the categories based on ["sus" parameters research by @Jhaddix and @G0LDEN_infosec](https://github.com/g0ldencybersec/sus_params). Also, the list of parameters in the console, alert and sent to clipboard, will also include the categories in which the parameter was found, e.g `boringParameter, query [XSS], path [LFI/RFI | SSRF | XSS]`
+
+  - Changed
+
+    - Fixed a bug that was introduced in the last bug which was introduced in v3.1 that stopped Wayback endpoints being written to the console. Sorry!
+    - Hosts `web.archive.org`, `webcache.googleusercontent.com` and `en.fofa.info` will be considered blacklisted so will not be affected by any of the selected actions themselves when launched from context menus.
+
 - v3.3
 
   - New

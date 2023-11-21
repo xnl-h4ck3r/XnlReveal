@@ -1,11 +1,11 @@
 <center><img src="https://github.com/xnl-h4ck3r/XnlReveal/blob/main/images/title.png"></center>
 
-## About - v3.3
+## About - v3.4
 
 This is a **Chrome/Firefox Extension** that can do the following:
 
 - For hosts that are in scope:
-  - Show an alert for any query parameters that are reflected.
+  - Show an alert for any query parameters that are reflected (and identify "sus" parameters).
   - Write details of reflected parameters to the browser console.
   - Copy details of reflected parameters to the users clipboard.
   - Show the Wayback Archive endpoints for the path visited (in browser console).
@@ -21,6 +21,8 @@ This is a **Chrome/Firefox Extension** that can do the following:
 - Visually indicate if the **Wayback CDX Server API** is not available (regardless if extension is active).
 
 The ability to show an alert for reflected parameters was inspired by a comment by [@renniepak](https://x.com/renniepak) on Episode 42 of the [Critical Thinking - Bug Bounty Podcast](https://www.criticalthinkingpodcast.io/episode-42-renniepak-interview-intigriti-lhe-recap/) where he mentioned he had his own browser extension that let him know about any reflections.
+
+The number of reflected parameters found is shown by a green badge on the extension icon. However, if any of the reflected parameter names are in a categories described in the ["sus" parameters research by @Jhaddix and @G0LDEN_infosec](https://github.com/g0ldencybersec/sus_params) then the badge will be red. If there are any "sus" parameters, then the categories will also be shown in the output to the console, alert box and clipboard, e.g. `boringParameter, query [XSS], path [LFI/RFI | SSRF | XSS]` (this is the same as the "sus" parameters identification in my [GAP Burp Extension](https://github.com/xnl-h4ck3r/GAP-Burp-Extension)).
 
 The ability to show hidden elements, and enable disabled elements, was inspired by this [Tweet by Critical Thinking - Bug Bounty Podcast](https://x.com/ctbbpodcast/status/1717151268622233614?s=20) and I initially created as browser bookmarks.
 

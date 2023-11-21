@@ -184,11 +184,18 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 
     // Make the cross-origin request from the background script
     fetch(newURL)
-      .then((response) => response.text())
-      .then((data) => {
-        updateIcon(response.status);
+      .then((response) => {
+        const statusCode = response.status; // Get the HTTP status code
+
         // Process the Wayback data here
-        sendResponse({ waybackData: data });
+        return response.text().then((data) => {
+          updateIcon(statusCode); // Call updateIcon with the status code
+          return { waybackData: data };
+        });
+      })
+      .then((result) => {
+        // Continue with processing the response
+        sendResponse(result);
       })
       .catch((error) => {
         // Handle any errors
@@ -201,8 +208,13 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   // Set the badge on the extension icon to the number of reflected parameters found
   if (request.action === "updateBadge") {
     const num = request.number; // Get the number of reflected parameters
+    const sus = request.sus; // Get whether there were "sus" parameters
     browser.browserAction.setBadgeText({text: String(num)});
-    browser.browserAction.setBadgeBackgroundColor({ color: 'green' });
+    if (sus) {
+      browser.browserAction.setBadgeBackgroundColor({ color: 'red' });
+    } else {
+      browser.browserAction.setBadgeBackgroundColor({ color: 'green' });
+    }
   }
   return true;
 });

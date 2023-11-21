@@ -15,6 +15,23 @@ statusBar.style.zIndex = "9999";
 // Define a global constant for ignored src strings
 const IGNORED_STRINGS = "googletagmanager|doubleclick|google-analytics";
 
+// Website blacklist
+const BLACKLIST = new Set(['web.archive.org','webcache.googleusercontent.com','en.fofa.info'])
+
+// Sus Parameters from @jhaddix and @G0LDEN_infosec
+const SUS_CMDI = new Set(['execute','dir','daemon','cli','log','cmd','download','ip','upload']);
+const SUS_DEBUG = new Set(['test','reset','config','shell','admin','exec','load','cfg','dbg','edit','root','create','access','disable','alter','make','grant','adm','toggle','execute','clone','delete','enable','rename','debug','modify']);
+const SUS_FILEINC = new Set(['root','directory','path','style','folder','default-language','url','platform','textdomain','document','template','pg','php_path','doc','type','lang','token','name','pdf','file','etc','api','app','resource-type']);
+const SUS_IDOR = new Set(['count','key','user','id','extended_data','uid2','group','team_id','data-id','no','username','email','account','doc','uuid','profile','number','user_id','edit','report','order']);
+const SUS_OPENREDIRECT = new Set(['u','redirect_uri','failed','r','referer','return_url','redirect_url','prejoin_data','continue','redir','return_to','origin','redirect_to','next']);
+const SUS_SQLI = new Set(['process','string','id','referer','password','pwd','field','view','sleep','column','log','token','sel','select','sort','from','search','update','pub_group_id','row','results','role','table','multi_layer_map_list','order','filter','params','user','fetch','limit','keyword','email','query','c','name','where','number','phone_number','delete','report']);
+const SUS_SSRF = new Set(['start','path','domain','source','url','site','view','template','page','show','val','dest','metadata','out','feed','navigation','image_host','uri','next','continue','host','window','dir','reference','filename','html','to','return','open','port','stop','validate','resturl','callback','name','data','ip','redirect']);
+const SUS_SSTI = new Set(['preview','activity','id','name','content','view','template','redirect']);
+const SUS_XSS = new Set(['path','admin','class','atb','redirect_uri','other','utm_source','currency','dir','title','endpoint','return_url','users','cookie','state','callback','militarybranch','e','referer','password','author','body','status','utm_campaign','value','text','search','flaw','vote','pathname','params','user','t','utm_medium','q','email','what','file','data-original','description','subject','action','u','nickname','color','language_id','auth','samlresponse','return','readyfunction','where','tags','cvo_sid1','target','format','back','term','r','id','url','view','username','sequel','type','city','src','p','label','ctx','style','html','ad_type','s','issues','query','c','shop','redirect']);
+
+// Additional Sus Parameters
+const SUS_MASSASSIGNMENT = new Set(['user','profile','role','settings','data','attributes','post','comment','order','product','form_fields','request']);
+
 // Listen for messages from the popup or background script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "dynamicScopeMenuItem") {
@@ -414,6 +431,12 @@ chrome.storage.sync.get(
 
         const currentHost = response.currentHost;
 
+        // Ignore blacklisted websites
+        if (BLACKLIST.has(location.host)) {
+          callback(false);
+          return;
+        }
+
         try {
           // Get the scope type from storage
           chrome.storage.sync.get(["scopeType"], (scopeResult) => {
@@ -476,6 +499,62 @@ chrome.storage.sync.get(
             `Xnl Reveal: Error copying to clipboard (${error}). Check that the site has permissions to access the clipboard in the browser`
           );
         });
+    }
+
+    // Function to process reflected parameters
+    function processReflectedParameters(reflectedParameters) {
+      const displayedParameters = [];
+      let susParams = false;
+
+      // Check if any reflected parameters appear in SUS parameter lists
+      reflectedParameters.forEach((param) => {
+        susTypes = "";
+        susTypes += SUS_CMDI.has(param) ? "CMDi | " : "";
+        susTypes += SUS_DEBUG.has(param) ? "DEBUG | " : "";
+        susTypes += SUS_FILEINC.has(param) ? "LFI/RFI | " : "";
+        susTypes += SUS_IDOR.has(param) ? "IDOR | " : "";
+        susTypes += SUS_OPENREDIRECT.has(param) ? "OR | " : "";
+        susTypes += SUS_SQLI.has(param) ? "SQLi | " : "";
+        susTypes += SUS_SSRF.has(param) ? "SSRF | " : "";
+        susTypes += SUS_SSTI.has(param) ? "SSTI | " : "";
+        susTypes += SUS_XSS.has(param) ? "XSS | " : "";
+        susTypes += SUS_MASSASSIGNMENT.has(param) ? "MASS-ASSIGN | " : "";
+
+        if (susTypes != "") {
+          displayedParameters.push(param + " [" + susTypes.slice(0, -3) + "]");
+          susParams = true;
+        } else {
+          displayedParameters.push(param);
+        }
+      });
+
+      reflectionConsoleMsg = `Xnl Reveal: Reflection found in URL ${
+        window.location.href
+      }\nReflected Parameters: ${displayedParameters.join(", ")}`;
+      reflectionAlertMsg = `Xnl Reveal:\n\nReflection found in URL ${
+        window.location.href
+      }\n\nReflected Parameters: ${displayedParameters.join(", ")}`;
+      // Send a message to background.js to update the icon badge with the number of parameters found
+      chrome.runtime.sendMessage({
+        action: "updateBadge",
+        number: reflectedParameters.length,
+        sus: susParams
+      });
+
+      // Write the info to the console too
+      console.log(reflectionConsoleMsg);
+
+      // Copy the info to the clipboard if required
+      if (copyToClipboard) {
+        copyToClipboardAsync(reflectionConsoleMsg);
+      }
+      
+      // Display an alert with the parameter names that reflect
+      if (showAlerts) {
+        alert(reflectionAlertMsg);
+      }
+
+      return reflectionConsoleMsg
     }
 
     function runAfterPageLoad() {
@@ -579,29 +658,7 @@ chrome.storage.sync.get(
                             // Check if we have processed all parameters and found reflections
                             if (successfulRequests === params.size) {
                               if (reflectedParameters.length > 0) {
-                                reflectionConsoleMsg = `Xnl Reveal: Reflection found in URL ${
-                                  window.location.href
-                                }\nReflected Parameters: ${reflectedParameters.join(
-                                  ", "
-                                )}`;
-                                reflectionAlertMsg = `Xnl Reveal:\n\nReflection found in URL ${
-                                  window.location.href
-                                }\n\nReflected Parameters: ${reflectedParameters.join(
-                                  ", "
-                                )}`;
-                                // Send a message to background.js to update the icon badge with the number of parameters found
-                                chrome.runtime.sendMessage({ action: "updateBadge", number: reflectedParameters.length });
-                                
-                                // Write the info to the console too
-                                console.log(reflectionConsoleMsg);
-                                // Copy the info to the clipboard if required
-                                if (copyToClipboard) {
-                                  copyToClipboardAsync(reflectionConsoleMsg);
-                                }
-                                // Display an alert with the parameter names that reflects
-                                if (showAlerts) {
-                                  alert(reflectionAlertMsg);
-                                }
+                                processReflectedParameters(reflectedParameters);
                               }
                               // Remove the status bar once all requests are processed
                               statusBar.remove();
