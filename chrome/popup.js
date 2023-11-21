@@ -1,6 +1,6 @@
 const enableExtensionButton = document.getElementById("enableExtension");
 const optionsFieldSet = document.getElementById("optionsFieldSet");
-const enableAlertsButton = document.getElementById("enableAlerts");
+const enableReflectionsButton = document.getElementById("enableReflections");
 const enableWaybackButton = document.getElementById("enableWayback");
 const enableHiddenButton = document.getElementById("enableHidden");
 const enableDisabledButton = document.getElementById("enableDisabled");
@@ -14,9 +14,9 @@ chrome.storage.sync.get(["extensionDisabled"], (result) => {
   optionsFieldSet.disabled = extensionDisabled === "true";
 });
 
-chrome.storage.sync.get(["alertsDisabled"], (result) => {
-  const alertsDisabled = result.alertsDisabled || "true";
-  enableAlertsButton.setAttribute("aria-checked", alertsDisabled);
+chrome.storage.sync.get(["reflectionsDisabled"], (result) => {
+  const reflectionsDisabled = result.reflectionsDisabled || "true";
+  enableReflectionsButton.setAttribute("aria-checked", reflectionsDisabled);
 });
 chrome.storage.sync.get(["waybackDisabled"], (result) => {
   const waybackDisabled = result.waybackDisabled || "true";
@@ -31,18 +31,18 @@ chrome.storage.sync.get(["disabledDisabled"], (result) => {
   enableDisabledButton.setAttribute("aria-checked", disabledDisabled);
 });
 
-// Toggle the extension's show alerts state when the checkbox is changed
-enableAlertsButton.addEventListener("click", () => {
+// Toggle the extension's show reflections state when the checkbox is changed
+enableReflectionsButton.addEventListener("click", () => {
   // Get the current value of the aria-checked attribute
-  const alertsDisabled = enableAlertsButton.getAttribute("aria-checked");
+  const reflectionsDisabled = enableReflectionsButton.getAttribute("aria-checked");
 
   // Toggle the value (if "true", change it to "false"; if "false", change it to "true")
-  const newValue = alertsDisabled === "true" ? "false" : "true";
+  const newValue = reflectionsDisabled === "true" ? "false" : "true";
 
   // Update the aria-checked attribute with the new value
-  enableAlertsButton.setAttribute("aria-checked", newValue);
+  enableReflectionsButton.setAttribute("aria-checked", newValue);
 
-  const setting = { ["alertsDisabled"]: newValue };
+  const setting = { ["reflectionsDisabled"]: newValue };
   chrome.storage.sync.set(setting);
 });
 
@@ -124,7 +124,7 @@ enableExtensionButton.addEventListener("click", () => {
 
   // Reload the active tab to apply changes immediately if necessary
   if (
-    enableAlertsButton.getAttribute("aria-checked") === "false" ||
+    enableReflectionsButton.getAttribute("aria-checked") === "false" ||
     enableHiddenButton.getAttribute("aria-checked") === "false" ||
     enableDisabledButton.getAttribute("aria-checked") === "false"
   ) {

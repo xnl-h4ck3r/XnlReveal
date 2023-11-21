@@ -1,12 +1,14 @@
 <center><img src="https://github.com/xnl-h4ck3r/XnlReveal/blob/main/images/title.png"></center>
 
-## About - v3.2
+## About - v3.3
 
 This is a **Chrome/Firefox Extension** that can do the following:
 
 - For hosts that are in scope:
   - Show an alert for any query parameters that are reflected.
-  - Show the Wayback Archive endpoints for the path visited.
+  - Write details of reflected parameters to the browser console.
+  - Copy details of reflected parameters to the users clipboard.
+  - Show the Wayback Archive endpoints for the path visited (in browser console).
   - Show any hidden elements on the page.
   - Enable any disabled elements on the page.
 - Provide a context menu (regardless if extension is active or host is in scope) to:
@@ -68,7 +70,8 @@ Clone this repo to your machine and then follow the instructions below, dependin
 You have the following options:
 
 - `Canary token` - When requests are made to test for reflection of query parameters, this is the value of the parameter that is used and checked for.
-- `Copy reflection text to clipboard` - If this is selected, and `Show query param reflection alerts` is selected on the Popup menu (see below), when parameter reflections are found, the details are put in the users clipboard as-well as shown in the console and on an alert box. This means that as soon as you an alert box, you can go to your notes and paste the details straight away.
+- `Show alert box for reflections` - If this is selected, and `Show query parameter reflections` is selected on the Popup menu (see below) then a browser alert box will be displayed with details of any query parameters that reflect.
+- `Copy reflection text to clipboard` - If this is selected, and `Show query parameter reflections` is selected on the Popup menu (see below), when parameter reflections are found, the details are put in the users clipboard as-well as shown in the console (and on an alert box if requested). This means that as soon as you see an alert box or details in teh console, you can go to your notes and paste the details straight away. **IMPORTANT: The browser may aks for the sites permission to interact with the clipboard. You need to accept this to use this functionality.**
 - `Check delay` - When a page is loaded, depending on settings, the extension will try to show hidden elements and enable disabled elements. However, sometimes parts of the page are loaded dynamically and they aren't in the original response. THe extension will try to show and enable again after this delay (in seconds) after the page has initially loaded.
 - `Wayback RegEx` - If the setting to write Wayback archive endpoints has been selected, then only wayback endpoints that match the entered RegEx will be displayed in the console. If the field is left blank, then all Wayback endpoints are returned. **IMPORTANT: Any RegEx entered will be treated as case insensitive**
 - `Extension Scope` options:
@@ -89,7 +92,7 @@ If you click the `Xnl Reveal` logo in the toolbar, you will see a popup menu.
 You have the following settings:
 
 - `ENABLE REVEAL` - If this is not checked then the extension will do nothing. If checked then it will take certain actions on web pages visited (if they are in scope), depending on the other options set.
-- `Show query param reflection alerts` - If this is checked, then when a web page is visited that has any query parameters, a background request is made for each parameter, replacing each in turn with the **Canary token** from the Options page. If the token is found for any of the parameters in the response, then an alert box is shown giving you the URL and all the parameters on that page that were reflected. These are also written to the browser console. The extension will also show a badge with the number of reflections found.<br>
+- `Show query parameter reflections` - If this is checked, then when a web page is visited that has any query parameters, a background request is made for each parameter, replacing each in turn with the **Canary token** from the Options page. If the token is found for any of the parameters in the response, then an message is written to the browser console giving you the URL and all the parameters on that page that were reflected. If the options are selected, these details can also be shown in a browser alert box and copied to the users clipboard. The extension will also show a badge with the number of reflections found.<br>
   **NOTE: If there are many parameters, it can take some time to send all the requests and wait for the responses. A red status bar is displayed at the top of the page to let you know to wait. Also, if the page is dynamic, then these may not be found in the initial response and reported.**
 - `Write Wayback endpoints to console` - If this is checked, then for each location/path visited in the browser, endpoints will be retrieved from the Wayback archive and written to the console. Once a location/path has been sent to the Wayback API it will not be sent again, unless the `Clear Saved URLs/Params` has been clicked.
 - `Show hidden elements` - If this is checked, then any elements (excluding `img`,`span` and `div`) that are hidden will be shown. They will be shown with a red border and a label in red that gives some detail. Sometimes, if the page is dynamic, the elements may not be shown.
@@ -122,6 +125,7 @@ If you manually run an option from the context menu and nothing happens, you may
 - Improve the UI more.
 - Allow the user to alter the Wayback API URL that gets called so exclusions can be edited.
 - Look at registering the extension so you don't need to reload each time in Firefox.
+- Try to fix the intermittent error of `Error copying to clipboard (NotAllowedError: Document is not focused.)`
 
 ## Issues
 

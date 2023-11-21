@@ -258,11 +258,12 @@ function showHiddenElements() {
 chrome.storage.sync.get(
   [
     "canaryToken",
+    "showAlerts",
     "copyToClipboard",
     "checkDelay",
     "waybackRegex",
     "extensionDisabled",
-    "alertsDisabled",
+    "reflectionsDisabled",
     "waybackDisabled",
     "hiddenDisabled",
     "disabledDisabled",
@@ -274,11 +275,11 @@ chrome.storage.sync.get(
     } else {
       extensionDisabled = result.extensionDisabled || "true";
     }
-    if (result.alertsDisabled === undefined) {
-      chrome.storage.sync.set({ ["alertsDisabled"]: "true" });
-      alertsDisabled = "true";
+    if (result.reflectionsDisabled === undefined) {
+      chrome.storage.sync.set({ ["reflectionsDisabled"]: "true" });
+      reflectionsDisabled = "true";
     } else {
-      alertsDisabled = result.alertsDisabled || "true";
+      reflectionsDisabled = result.reflectionsDisabled || "true";
     }
     if (result.waybackDisabled === undefined) {
       chrome.storage.sync.set({ ["waybackDisabled"]: "true" });
@@ -304,11 +305,17 @@ chrome.storage.sync.get(
     } else {
       canaryToken = result.canaryToken || "xnlreveal";
     }
+    if (result.showAlerts === undefined) {
+      chrome.storage.sync.set({ ["showAlerts"]: true });
+      showAlerts = true;
+    } else {
+      showAlerts = result.showAlerts;
+    }
     if (result.copyToClipboard === undefined) {
       chrome.storage.sync.set({ ["copyToClipboard"]: false });
       copyToClipboard = false;
     } else {
-      copyToClipboard = result.copyToClipboard || false;
+      copyToClipboard = result.copyToClipboard;
     }
     if (result.checkDelay === undefined) {
       chrome.storage.sync.set({ ["checkDelay"]: "2" });
@@ -481,7 +488,7 @@ chrome.storage.sync.get(
           extensionDisabled === "false" &&
           (hiddenDisabled === "false" ||
             disabledDisabled === "false" ||
-            alertsDisabled === "false" ||
+            reflectionsDisabled === "false" ||
             waybackDisabled === "false")
         ) {
           // Call isHostInScope with a callback to handle the result
@@ -499,8 +506,8 @@ chrome.storage.sync.get(
               if (disabledDisabled === "false") {
                 enableDisabledElements();
               }
-              // Alert on reflections if enabled
-              if (alertsDisabled === "false") {
+              // Process reflections if enabled
+              if (reflectionsDisabled === "false") {
                 const params = new URLSearchParams(window.location.search);
                 const reflectedParameters = [];
 
@@ -587,12 +594,12 @@ chrome.storage.sync.get(
                                 
                                 // Write the info to the console too
                                 console.log(reflectionConsoleMsg);
-                                // Display an alert with the parameter names that reflect
-                                if (alertsDisabled === "false") {
-                                  // Copy the info to the clipboard if required
-                                  if (copyToClipboard) {
-                                    copyToClipboardAsync(reflectionConsoleMsg);
-                                  }
+                                // Copy the info to the clipboard if required
+                                if (copyToClipboard) {
+                                  copyToClipboardAsync(reflectionConsoleMsg);
+                                }
+                                // Display an alert with the parameter names that reflects
+                                if (showAlerts) {
                                   alert(reflectionAlertMsg);
                                 }
                               }

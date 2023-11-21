@@ -1,4 +1,5 @@
 const canaryTokenInput = document.getElementById("canaryTokenInput");
+const showAlertsInput = document.getElementById("showAlertsInput");
 const copyToClipboardInput = document.getElementById("copyToClipboardInput");
 const checkDelayInput = document.getElementById("checkDelayInput");
 const waybackRegexInput = document.getElementById("waybackRegexInput");
@@ -26,15 +27,22 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 // Load the user's options
-browser.storage.sync
-  .get(["canaryToken", "copyToClipboard", "checkDelay", "waybackRegex"])
-  .then((result) => {
-    canaryTokenInput.value = result.canaryToken || "xnlreveal";
-    copyToClipboardInput.checked = result.copyToClipboard || false;
-    checkDelayInput.value = result.checkDelay || "2";
-    waybackRegexInput.value = result.waybackRegex || "";
-  });
-
+// Load the user's options
+browser.storage.sync.get(["canaryToken"], (result) => {
+  canaryTokenInput.value = result.canaryToken || "xnlreveal";
+});
+browser.storage.sync.get(["showAlerts"], (result) => {
+  showAlertsInput.checked = result.showAlerts !== undefined ? result.showAlerts : true;
+});
+browser.storage.sync.get(["copyToClipboard"], (result) => {
+  copyToClipboardInput.checked = result.copyToClipboard !== undefined ? result.copyToClipboard : false;
+});
+browser.storage.sync.get(["checkDelay"], (result) => {
+  checkDelayInput.value = result.checkDelay || "2";
+});
+browser.storage.sync.get(["waybackRegex"], (result) => {
+  waybackRegexInput.value = result.waybackRegex || "";
+});
 browser.storage.sync.get(["scopeItems"], (result) => {
   const savedScope = result.scopeItems || [];
   savedScope.forEach((item) => {
@@ -113,6 +121,7 @@ saveButton.addEventListener("click", (e) => {
   e.preventDefault(); // Prevent the form from actually submitting
 
   let canaryToken = canaryTokenInput.value;
+  const showAlerts = showAlertsInput.checked;
   const copyToClipboard = copyToClipboardInput.checked;
   const checkDelay = checkDelayInput.value;
   let waybackRegex = waybackRegexInput.value;
@@ -129,14 +138,12 @@ saveButton.addEventListener("click", (e) => {
     waybackRegexInput.value = waybackRegex;
   }
 
-  browser.storage.sync
-    .set({ canaryToken, copyToClipboard, checkDelay, waybackRegex })
-    .then(() => {
-      showMessage("Options successfully saved!");
-    })
-    .catch((error) => {
-      console.error(error);
-    });
+  // Save all options
+  browser.storage.sync.set({ canaryToken });
+  browser.storage.sync.set({ showAlerts });
+  browser.storage.sync.set({ copyToClipboard });
+  browser.storage.sync.set({ checkDelay });
+  browser.storage.sync.set({ waybackRegex });
   if (scopeTypeWhiteRadio.checked) {
     browser.storage.sync.set({ scopeType: "whitelist" });
   } else {
@@ -146,6 +153,8 @@ saveButton.addEventListener("click", (e) => {
     (option) => option.value
   );
   browser.storage.sync.set({ scopeItems });
+
+  showMessage("Options successfully saved!");
 });
 
 // Add a click event listener to clear the local storage

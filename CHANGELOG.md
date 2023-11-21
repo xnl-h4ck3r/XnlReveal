@@ -1,5 +1,16 @@
 ## Changelog
 
+- v3.3
+
+  - New
+
+    - Add a new option to the **Options** page for **Show alert box for reflections**. If the **Show query parameter reflections** action is checked, then this determines whether a browser alert box is shown for parameter reflections. If not,you can still have the reflections written to the console and copied to the clipboard (if required).
+
+  - Changed
+
+    - Fix an issue where the `Copy reflection to clipboard` field value wasn't saved correctly on the **Options** page.
+    - Change the **Show query param reflections alerts** action on the **Popup** page to **Show query parameter reflections**. 
+
 - v3.2
 
   - New
