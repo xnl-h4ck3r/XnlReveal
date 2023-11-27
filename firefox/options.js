@@ -1,6 +1,7 @@
 const canaryTokenInput = document.getElementById("canaryTokenInput");
 const showAlertsInput = document.getElementById("showAlertsInput");
 const copyToClipboardInput = document.getElementById("copyToClipboardInput");
+const paramBlacklistInput = document.getElementById("paramBlacklistInput");
 const checkDelayInput = document.getElementById("checkDelayInput");
 const waybackRegexInput = document.getElementById("waybackRegexInput");
 const saveCanaryTokenButton = document.getElementById("saveButton");
@@ -32,10 +33,15 @@ browser.storage.sync.get(["canaryToken"], (result) => {
   canaryTokenInput.value = result.canaryToken || "xnlreveal";
 });
 browser.storage.sync.get(["showAlerts"], (result) => {
-  showAlertsInput.checked = result.showAlerts !== undefined ? result.showAlerts : true;
+  showAlertsInput.checked =
+    result.showAlerts !== undefined ? result.showAlerts : true;
 });
 browser.storage.sync.get(["copyToClipboard"], (result) => {
-  copyToClipboardInput.checked = result.copyToClipboard !== undefined ? result.copyToClipboard : false;
+  copyToClipboardInput.checked =
+    result.copyToClipboard !== undefined ? result.copyToClipboard : false;
+});
+browser.storage.sync.get(["paramBlacklist"], (result) => {
+  paramBlacklistInput.value = result.paramBlacklist || "";
 });
 browser.storage.sync.get(["checkDelay"], (result) => {
   checkDelayInput.value = result.checkDelay || "2";
@@ -123,6 +129,7 @@ saveButton.addEventListener("click", (e) => {
   let canaryToken = canaryTokenInput.value;
   const showAlerts = showAlertsInput.checked;
   const copyToClipboard = copyToClipboardInput.checked;
+  let paramBlacklist = paramBlacklistInput.value;
   const checkDelay = checkDelayInput.value;
   let waybackRegex = waybackRegexInput.value;
 
@@ -138,10 +145,17 @@ saveButton.addEventListener("click", (e) => {
     waybackRegexInput.value = waybackRegex;
   }
 
+  // Check if paramBlacklist is blank and reset it to ""
+  if (!paramBlacklist) {
+    paramBlacklist = "";
+    paramBlacklistInput.value = paramBlacklist;
+  }
+
   // Save all options
   browser.storage.sync.set({ canaryToken });
   browser.storage.sync.set({ showAlerts });
   browser.storage.sync.set({ copyToClipboard });
+  browser.storage.sync.set({ paramBlacklist });
   browser.storage.sync.set({ checkDelay });
   browser.storage.sync.set({ waybackRegex });
   if (scopeTypeWhiteRadio.checked) {

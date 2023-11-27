@@ -1,5 +1,11 @@
 ## Changelog
 
+- v3.5
+
+  - New
+
+    - Add a new option of `Param blacklist`. This will be a comma separated list of parameter names that you do not want to replace with the canary token to check if it reflects. This can be used when replacing certain parameters causes problems, e.g. logging you out.
+
 - v3.4
 
   - New
@@ -20,7 +26,7 @@
   - Changed
 
     - Fix an issue where the `Copy reflection to clipboard` field value wasn't saved correctly on the **Options** page.
-    - Change the **Show query param reflections alerts** action on the **Popup** page to **Show query parameter reflections**. 
+    - Change the **Show query param reflections alerts** action on the **Popup** page to **Show query parameter reflections**.
 
 - v3.2
 
@@ -32,7 +38,7 @@
 
     - The check for whether the Wayback CDX Server API is up should was accidentally set to 1 minute for Firefox, but should have been 10 minutes.
 
-- v3.1 
+- v3.1
 
   - New
 

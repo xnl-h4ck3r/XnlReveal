@@ -1,6 +1,6 @@
 <center><img src="https://github.com/xnl-h4ck3r/XnlReveal/blob/main/images/title.png"></center>
 
-## About - v3.4
+## About - v3.5
 
 This is a **Chrome/Firefox Extension** that can do the following:
 
@@ -74,6 +74,7 @@ You have the following options:
 - `Canary token` - When requests are made to test for reflection of query parameters, this is the value of the parameter that is used and checked for.
 - `Show alert box for reflections` - If this is selected, and `Show query parameter reflections` is selected on the Popup menu (see below) then a browser alert box will be displayed with details of any query parameters that reflect.
 - `Copy reflection text to clipboard` - If this is selected, and `Show query parameter reflections` is selected on the Popup menu (see below), when parameter reflections are found, the details are put in the users clipboard as-well as shown in the console (and on an alert box if requested). This means that as soon as you see an alert box or details in teh console, you can go to your notes and paste the details straight away. **IMPORTANT: The browser may aks for the sites permission to interact with the clipboard. You need to accept this to use this functionality.**
+- `Param blacklist` - This is a comma separated list of parameter names (e.g. `param1,param2`) that you do not want to replace with the canary token to check if it reflects. This can be used when testing certain parameters causes problems, e.g. logging you out.
 - `Check delay` - When a page is loaded, depending on settings, the extension will try to show hidden elements and enable disabled elements. However, sometimes parts of the page are loaded dynamically and they aren't in the original response. THe extension will try to show and enable again after this delay (in seconds) after the page has initially loaded.
 - `Wayback RegEx` - If the setting to write Wayback archive endpoints has been selected, then only wayback endpoints that match the entered RegEx will be displayed in the console. If the field is left blank, then all Wayback endpoints are returned. **IMPORTANT: Any RegEx entered will be treated as case insensitive**
 - `Extension Scope` options:

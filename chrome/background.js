@@ -5,17 +5,29 @@ const alarmName = "checkWaybackStatus";
 // Function to update the extension icon based on the response status
 function updateIcon(responseStatus) {
   if (responseStatus === 200) {
-    chrome.action.setIcon({ path: { 16: "images/icon16.png", 48: "images/icon48.png", 128: "images/icon128.png" } });
-    chrome.action.setTitle({title: "Xnl Reveal"});
+    chrome.action.setIcon({
+      path: {
+        16: "images/icon16.png",
+        48: "images/icon48.png",
+        128: "images/icon128.png",
+      },
+    });
+    chrome.action.setTitle({ title: "Xnl Reveal" });
   } else {
-    chrome.action.setIcon({ path: { 16: "images/iconnoway16.png", 48: "images/iconnoway48.png", 128: "images/iconnoway128.png" } });
-    chrome.action.setTitle({title: "Xnl Reveal (Wayback down!)"});
+    chrome.action.setIcon({
+      path: {
+        16: "images/iconnoway16.png",
+        48: "images/iconnoway48.png",
+        128: "images/iconnoway128.png",
+      },
+    });
+    chrome.action.setTitle({ title: "Xnl Reveal (Wayback down!)" });
   }
 }
 
 function checkWaybackStatus() {
   // Check if the Wayback CDX API is available
-  fetch('https://web.archive.org/cdx/search/cdx?url=AVAILABLEORNOT')
+  fetch("https://web.archive.org/cdx/search/cdx?url=AVAILABLEORNOT")
     .then((response) => {
       updateIcon(response.status);
     })
@@ -139,12 +151,12 @@ chrome.contextMenus.onClicked.addListener(function (clickData) {
 
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   if (request.action === "removeScopeMenu") {
-    chrome.action.setBadgeText({text: ""}); // Reset the badge on the icon
+    chrome.action.setBadgeText({ text: "" }); // Reset the badge on the icon
     // Remove the existing scope context menu item
     removeContextMenu();
   }
   if (request.action === "getTabInfo") {
-    chrome.action.setBadgeText({text: ""}); // Reset the badge on the icon
+    chrome.action.setBadgeText({ text: "" }); // Reset the badge on the icon
 
     chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
       if (chrome.runtime.lastError) {
@@ -211,11 +223,11 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   if (request.action === "updateBadge") {
     const num = request.number; // Get the number of reflected parameters
     const sus = request.sus; // Get whether there were "sus" parameters
-    chrome.action.setBadgeText({text: String(num)});
+    chrome.action.setBadgeText({ text: String(num) });
     if (sus) {
-      chrome.action.setBadgeBackgroundColor({ color: 'red' });
+      chrome.action.setBadgeBackgroundColor({ color: "red" });
     } else {
-      chrome.action.setBadgeBackgroundColor({ color: 'green' });
+      chrome.action.setBadgeBackgroundColor({ color: "green" });
     }
   }
   return true;
@@ -226,6 +238,7 @@ chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.sync.set({ canaryToken: "xnlreveal" });
   chrome.storage.sync.set({ showAlerts: true });
   chrome.storage.sync.set({ copyToClipboard: false });
+  chrome.storage.sync.set({ paramBlacklist: "" });
   chrome.storage.sync.set({ checkDelay: "2" });
   chrome.storage.sync.set({ waybackRegex: "" });
   chrome.storage.sync.set({ scopeType: "" });

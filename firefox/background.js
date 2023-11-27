@@ -5,17 +5,29 @@ const alarmName = "checkWaybackStatus";
 // Function to update the extension icon based on the response status
 function updateIcon(responseStatus) {
   if (responseStatus === 200) {
-    browser.browserAction.setIcon({ path: { 16: "images/icon16.png", 48: "images/icon48.png", 128: "images/icon128.png" } });
-    browser.browserAction.setTitle({title: "Xnl Reveal"});
+    browser.browserAction.setIcon({
+      path: {
+        16: "images/icon16.png",
+        48: "images/icon48.png",
+        128: "images/icon128.png",
+      },
+    });
+    browser.browserAction.setTitle({ title: "Xnl Reveal" });
   } else {
-    browser.browserAction.setIcon({ path: { 16: "images/iconnoway16.png", 48: "images/iconnoway48.png", 128: "images/iconnoway128.png" } });
-    browser.browserAction.setTitle({title: "Xnl Reveal (Wayback down!)"});
+    browser.browserAction.setIcon({
+      path: {
+        16: "images/iconnoway16.png",
+        48: "images/iconnoway48.png",
+        128: "images/iconnoway128.png",
+      },
+    });
+    browser.browserAction.setTitle({ title: "Xnl Reveal (Wayback down!)" });
   }
 }
 
 function checkWaybackStatus() {
   // Check if the Wayback CDX API is available
-  fetch('https://web.archive.org/cdx/search/cdx?url=AVAILABLEORNOT')
+  fetch("https://web.archive.org/cdx/search/cdx?url=AVAILABLEORNOT")
     .then((response) => {
       updateIcon(response.status);
     })
@@ -139,12 +151,12 @@ browser.contextMenus.onClicked.addListener(function (clickData) {
 
 browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   if (request.action === "removeScopeMenu") {
-    browser.browserAction.setBadgeText({text: ""}); // Reset the badge on the icon
+    browser.browserAction.setBadgeText({ text: "" }); // Reset the badge on the icon
     // Remove the existing scope context menu item
     removeContextMenu();
   }
   if (request.action === "getTabInfo") {
-    browser.browserAction.setBadgeText({text: ""}); // Reset the badge on the icon
+    browser.browserAction.setBadgeText({ text: "" }); // Reset the badge on the icon
 
     browser.tabs.query({ active: true, currentWindow: true }, function (tabs) {
       if (browser.runtime.lastError) {
@@ -209,11 +221,11 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   if (request.action === "updateBadge") {
     const num = request.number; // Get the number of reflected parameters
     const sus = request.sus; // Get whether there were "sus" parameters
-    browser.browserAction.setBadgeText({text: String(num)});
+    browser.browserAction.setBadgeText({ text: String(num) });
     if (sus) {
-      browser.browserAction.setBadgeBackgroundColor({ color: 'red' });
+      browser.browserAction.setBadgeBackgroundColor({ color: "red" });
     } else {
-      browser.browserAction.setBadgeBackgroundColor({ color: 'green' });
+      browser.browserAction.setBadgeBackgroundColor({ color: "green" });
     }
   }
   return true;
@@ -224,6 +236,7 @@ browser.runtime.onInstalled.addListener(() => {
   browser.storage.sync.set({ canaryToken: "xnlreveal" });
   browser.storage.sync.set({ showAlerts: true });
   browser.storage.sync.set({ copyToClipboard: false });
+  browser.storage.sync.set({ paramBlacklist: "" });
   browser.storage.sync.set({ checkDelay: "2" });
   browser.storage.sync.set({ waybackRegex: "" });
 

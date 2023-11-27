@@ -16,21 +16,305 @@ statusBar.style.zIndex = "9999";
 const IGNORED_STRINGS = "googletagmanager|doubleclick|google-analytics";
 
 // Website blacklist
-const BLACKLIST = new Set(['web.archive.org','webcache.googleusercontent.com','en.fofa.info'])
+const BLACKLIST = new Set([
+  "web.archive.org",
+  "webcache.googleusercontent.com",
+  "en.fofa.info",
+]);
 
 // Sus Parameters from @jhaddix and @G0LDEN_infosec
-const SUS_CMDI = new Set(['execute','dir','daemon','cli','log','cmd','download','ip','upload']);
-const SUS_DEBUG = new Set(['test','reset','config','shell','admin','exec','load','cfg','dbg','edit','root','create','access','disable','alter','make','grant','adm','toggle','execute','clone','delete','enable','rename','debug','modify']);
-const SUS_FILEINC = new Set(['root','directory','path','style','folder','default-language','url','platform','textdomain','document','template','pg','php_path','doc','type','lang','token','name','pdf','file','etc','api','app','resource-type']);
-const SUS_IDOR = new Set(['count','key','user','id','extended_data','uid2','group','team_id','data-id','no','username','email','account','doc','uuid','profile','number','user_id','edit','report','order']);
-const SUS_OPENREDIRECT = new Set(['u','redirect_uri','failed','r','referer','return_url','redirect_url','prejoin_data','continue','redir','return_to','origin','redirect_to','next']);
-const SUS_SQLI = new Set(['process','string','id','referer','password','pwd','field','view','sleep','column','log','token','sel','select','sort','from','search','update','pub_group_id','row','results','role','table','multi_layer_map_list','order','filter','params','user','fetch','limit','keyword','email','query','c','name','where','number','phone_number','delete','report']);
-const SUS_SSRF = new Set(['start','path','domain','source','url','site','view','template','page','show','val','dest','metadata','out','feed','navigation','image_host','uri','next','continue','host','window','dir','reference','filename','html','to','return','open','port','stop','validate','resturl','callback','name','data','ip','redirect']);
-const SUS_SSTI = new Set(['preview','activity','id','name','content','view','template','redirect']);
-const SUS_XSS = new Set(['path','admin','class','atb','redirect_uri','other','utm_source','currency','dir','title','endpoint','return_url','users','cookie','state','callback','militarybranch','e','referer','password','author','body','status','utm_campaign','value','text','search','flaw','vote','pathname','params','user','t','utm_medium','q','email','what','file','data-original','description','subject','action','u','nickname','color','language_id','auth','samlresponse','return','readyfunction','where','tags','cvo_sid1','target','format','back','term','r','id','url','view','username','sequel','type','city','src','p','label','ctx','style','html','ad_type','s','issues','query','c','shop','redirect']);
+const SUS_CMDI = new Set([
+  "execute",
+  "dir",
+  "daemon",
+  "cli",
+  "log",
+  "cmd",
+  "download",
+  "ip",
+  "upload",
+]);
+const SUS_DEBUG = new Set([
+  "test",
+  "reset",
+  "config",
+  "shell",
+  "admin",
+  "exec",
+  "load",
+  "cfg",
+  "dbg",
+  "edit",
+  "root",
+  "create",
+  "access",
+  "disable",
+  "alter",
+  "make",
+  "grant",
+  "adm",
+  "toggle",
+  "execute",
+  "clone",
+  "delete",
+  "enable",
+  "rename",
+  "debug",
+  "modify",
+]);
+const SUS_FILEINC = new Set([
+  "root",
+  "directory",
+  "path",
+  "style",
+  "folder",
+  "default-language",
+  "url",
+  "platform",
+  "textdomain",
+  "document",
+  "template",
+  "pg",
+  "php_path",
+  "doc",
+  "type",
+  "lang",
+  "token",
+  "name",
+  "pdf",
+  "file",
+  "etc",
+  "api",
+  "app",
+  "resource-type",
+]);
+const SUS_IDOR = new Set([
+  "count",
+  "key",
+  "user",
+  "id",
+  "extended_data",
+  "uid2",
+  "group",
+  "team_id",
+  "data-id",
+  "no",
+  "username",
+  "email",
+  "account",
+  "doc",
+  "uuid",
+  "profile",
+  "number",
+  "user_id",
+  "edit",
+  "report",
+  "order",
+]);
+const SUS_OPENREDIRECT = new Set([
+  "u",
+  "redirect_uri",
+  "failed",
+  "r",
+  "referer",
+  "return_url",
+  "redirect_url",
+  "prejoin_data",
+  "continue",
+  "redir",
+  "return_to",
+  "origin",
+  "redirect_to",
+  "next",
+]);
+const SUS_SQLI = new Set([
+  "process",
+  "string",
+  "id",
+  "referer",
+  "password",
+  "pwd",
+  "field",
+  "view",
+  "sleep",
+  "column",
+  "log",
+  "token",
+  "sel",
+  "select",
+  "sort",
+  "from",
+  "search",
+  "update",
+  "pub_group_id",
+  "row",
+  "results",
+  "role",
+  "table",
+  "multi_layer_map_list",
+  "order",
+  "filter",
+  "params",
+  "user",
+  "fetch",
+  "limit",
+  "keyword",
+  "email",
+  "query",
+  "c",
+  "name",
+  "where",
+  "number",
+  "phone_number",
+  "delete",
+  "report",
+]);
+const SUS_SSRF = new Set([
+  "start",
+  "path",
+  "domain",
+  "source",
+  "url",
+  "site",
+  "view",
+  "template",
+  "page",
+  "show",
+  "val",
+  "dest",
+  "metadata",
+  "out",
+  "feed",
+  "navigation",
+  "image_host",
+  "uri",
+  "next",
+  "continue",
+  "host",
+  "window",
+  "dir",
+  "reference",
+  "filename",
+  "html",
+  "to",
+  "return",
+  "open",
+  "port",
+  "stop",
+  "validate",
+  "resturl",
+  "callback",
+  "name",
+  "data",
+  "ip",
+  "redirect",
+]);
+const SUS_SSTI = new Set([
+  "preview",
+  "activity",
+  "id",
+  "name",
+  "content",
+  "view",
+  "template",
+  "redirect",
+]);
+const SUS_XSS = new Set([
+  "path",
+  "admin",
+  "class",
+  "atb",
+  "redirect_uri",
+  "other",
+  "utm_source",
+  "currency",
+  "dir",
+  "title",
+  "endpoint",
+  "return_url",
+  "users",
+  "cookie",
+  "state",
+  "callback",
+  "militarybranch",
+  "e",
+  "referer",
+  "password",
+  "author",
+  "body",
+  "status",
+  "utm_campaign",
+  "value",
+  "text",
+  "search",
+  "flaw",
+  "vote",
+  "pathname",
+  "params",
+  "user",
+  "t",
+  "utm_medium",
+  "q",
+  "email",
+  "what",
+  "file",
+  "data-original",
+  "description",
+  "subject",
+  "action",
+  "u",
+  "nickname",
+  "color",
+  "language_id",
+  "auth",
+  "samlresponse",
+  "return",
+  "readyfunction",
+  "where",
+  "tags",
+  "cvo_sid1",
+  "target",
+  "format",
+  "back",
+  "term",
+  "r",
+  "id",
+  "url",
+  "view",
+  "username",
+  "sequel",
+  "type",
+  "city",
+  "src",
+  "p",
+  "label",
+  "ctx",
+  "style",
+  "html",
+  "ad_type",
+  "s",
+  "issues",
+  "query",
+  "c",
+  "shop",
+  "redirect",
+]);
 
 // Additional Sus Parameters
-const SUS_MASSASSIGNMENT = new Set(['user','profile','role','settings','data','attributes','post','comment','order','product','form_fields','request']);
+const SUS_MASSASSIGNMENT = new Set([
+  "user",
+  "profile",
+  "role",
+  "settings",
+  "data",
+  "attributes",
+  "post",
+  "comment",
+  "order",
+  "product",
+  "form_fields",
+  "request",
+]);
 
 // Listen for messages from the popup or background script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -134,29 +418,24 @@ function showGoogleCache() {
 // Function to get the root domain from a hostname
 function rootDomain(hostname) {
   let parts = hostname.split(".");
-  if (parts.length <= 2)
-    return hostname;
-  
+  if (parts.length <= 2) return hostname;
+
   parts = parts.slice(-3);
-  if (['co','com'].indexOf(parts[1]) > -1)
-    return parts.join('.');
-  
-  return parts.slice(-2).join('.');
+  if (["co", "com"].indexOf(parts[1]) > -1) return parts.join(".");
+
+  return parts.slice(-2).join(".");
 }
 
 // Function to open FOFA search for domain in a separate window
 function showFofaSearch() {
   try {
-
     // Get the current root domain
     domain = rootDomain(window.location.hostname);
 
     // Get the base64 encoded and URL encoded version of the domain
-    base64Domain = encodeURIComponent(btoa("domain="+domain));
+    base64Domain = encodeURIComponent(btoa("domain=" + domain));
 
-    var newURL =
-      "https://en.fofa.info/result?qbase64=" +
-      base64Domain;
+    var newURL = "https://en.fofa.info/result?qbase64=" + base64Domain;
 
     // open the window
     var newWindow = window.open(newURL, "_blank");
@@ -277,6 +556,7 @@ chrome.storage.sync.get(
     "canaryToken",
     "showAlerts",
     "copyToClipboard",
+    "paramBlacklist",
     "checkDelay",
     "waybackRegex",
     "extensionDisabled",
@@ -333,6 +613,12 @@ chrome.storage.sync.get(
       copyToClipboard = false;
     } else {
       copyToClipboard = result.copyToClipboard;
+    }
+    if (result.paramBlacklist === undefined) {
+      chrome.storage.sync.set({ ["paramBlacklist"]: "" });
+      paramBlacklist = "";
+    } else {
+      paramBlacklist = result.paramBlacklist || "";
     }
     if (result.checkDelay === undefined) {
       chrome.storage.sync.set({ ["checkDelay"]: "2" });
@@ -538,7 +824,7 @@ chrome.storage.sync.get(
       chrome.runtime.sendMessage({
         action: "updateBadge",
         number: reflectedParameters.length,
-        sus: susParams
+        sus: susParams,
       });
 
       // Write the info to the console too
@@ -548,13 +834,13 @@ chrome.storage.sync.get(
       if (copyToClipboard) {
         copyToClipboardAsync(reflectionConsoleMsg);
       }
-      
+
       // Display an alert with the parameter names that reflect
       if (showAlerts) {
         alert(reflectionAlertMsg);
       }
 
-      return reflectionConsoleMsg
+      return reflectionConsoleMsg;
     }
 
     function runAfterPageLoad() {
@@ -594,6 +880,20 @@ chrome.storage.sync.get(
                 let successfulRequests = 0;
 
                 params.forEach((value, key) => {
+                  // Check if the parameter name is in the blacklist. If it is then skip it
+                  const blacklistArray = paramBlacklist
+                    .split(",")
+                    .map((param) => param.trim()); // Trim each parameter
+                  if (
+                    (blacklistArray.length === 1 &&
+                      blacklistArray[0] === key) ||
+                    blacklistArray.includes(key)
+                  ) {
+                    // Increment the successful requests counter
+                    successfulRequests++;
+                    return;
+                  }
+
                   // Create a modified URL by replacing the current parameter's value
                   const modifiedParams = new URLSearchParams(params);
                   modifiedParams.set(key, canaryToken);

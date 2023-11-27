@@ -1126,7 +1126,8 @@ form > label {
 }
 
 #canaryTokenInput,
-#waybackRegexInput {
+#waybackRegexInput,
+#paramBlacklistInput {
     flex-grow: 1;
 }
 
