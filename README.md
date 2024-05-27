@@ -1,6 +1,6 @@
 <center><img src="https://github.com/xnl-h4ck3r/XnlReveal/blob/main/images/title.png"></center>
 
-## About - v3.5
+## About - v3.6
 
 This is a **Chrome/Firefox Extension** that can do the following:
 
@@ -17,6 +17,7 @@ This is a **Chrome/Firefox Extension** that can do the following:
   - Enable any disabled element on the page (even if the extension isn't enabled to do automatically).
   - Open a new tab to show the Google Cache version of the current page.
   - Open a new tab to show the [FOFA](https://en.fofa.info/) search results for the current domain.
+  - Create a word list from the contents of a page in a new tab (currently only Chrome version only)
   - Add/Remove the current domain to the whitelist/blacklist.
 - Visually indicate if the **Wayback CDX Server API** is not available (regardless if extension is active).
 
@@ -114,6 +115,7 @@ These options are available even if the `ENABLE REVEAL` option in the **Popup Me
 - `Enable disabled elements` - This will enable all disabled elements on the current page, in the same way as the `Enable disabled elements` does, but the extension doesn't need to be enabled.
 - `Show Google cache version` - If this is clicked, a new tab will be opened that will open the Google Cache version of the current page. Even if a website is no longer available, Google will have a copy stored in its archives, and you can still access the cached page.
 - `Show FOFA domain search` - If this is clicked, a new tab will be opened with [FOFA](https://en.fofa.info/) showing the search results for `domain="{TARGET}"`, where `{TARGET}` is the domain of the active tab.
+- `Create word list` **CHROME ONLY AT THE MOMENT** - If this is clicked, a word list will be created from the contents of the page and displayed in a new tab.
 - `{Add|Remove} {HOST} {from|to} {whitelist|blacklist}` - Depending on whether the host name of the current tab is in teh scope list already, and whether the option of whitelist or blacklist is selected, you will will get a menu item to add/remove it. For example, if you are on https://www.redbull.com/gb-en/ and you have `Blacklist` selected on the **Options** page, and `redbull.com` is not in the scope list, you will see the context menu item of `Add redbull.com to blacklist`. **IMPORTANT: If the menu item does not show the correct host, you may need to refresh the tab**.
 
 ## Important
@@ -126,6 +128,7 @@ If you manually run an option from the context menu and nothing happens, you may
 ## TODO
 
 - Improve the UI more.
+- Add the `Create word list` option to Firefox version.
 - Allow the user to alter the Wayback API URL that gets called so exclusions can be edited.
 - Look at registering the extension so you don't need to reload each time in Firefox.
 - Try to fix the intermittent error of `Error copying to clipboard (NotAllowedError: Document is not focused.)`

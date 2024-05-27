@@ -1,5 +1,11 @@
 ## Changelog
 
+- v3.6
+
+  - New
+
+    - Add a new option of `Create word list` (to Chrome version only at the moment). This will open a new tab that will display a word list generated from the tab the option was selected on.
+
 - v3.5
 
   - New

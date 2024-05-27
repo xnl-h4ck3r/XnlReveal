@@ -46,5 +46,19 @@
         "matches": [
             "<all_urls>"
         ]
-    }
+    },
+    "web_accessible_resources": [
+        {
+            "resources": [
+                "xnl.css",
+                "images/codemain.jpg",
+                "images/icon16.png",
+                "images/icon48.png",
+                "images/icon128.png"
+            ],
+            "matches": [
+                "<all_urls>"
+            ]
+        }
+    ]
 }

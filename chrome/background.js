@@ -76,6 +76,12 @@ let contextMenuFofa = {
   contexts: ["all"],
 };
 
+let contextMenuWordlist = {
+  id: "createWordList",
+  title: "Create word list",
+  contexts: ["all"],
+};
+
 let scopeContextMenuAction = "";
 let scopeContextMenuHost = "";
 
@@ -133,6 +139,7 @@ chrome.contextMenus.removeAll(() => {
   chrome.contextMenus.create(contextMenuDisabled);
   chrome.contextMenus.create(contextMenuGoogle);
   chrome.contextMenus.create(contextMenuFofa);
+  chrome.contextMenus.create(contextMenuWordlist);
 });
 
 chrome.contextMenus.onClicked.addListener(function (clickData) {

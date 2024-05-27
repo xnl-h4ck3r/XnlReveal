@@ -15,6 +15,10 @@ statusBar.style.zIndex = "9999";
 // Define a global constant for ignored src strings
 const IGNORED_STRINGS = "googletagmanager|doubleclick|google-analytics";
 
+// Default english "stop word" list
+const DEFAULT_STOP_WORDS =
+  "a,aboard,about,above,across,after,afterwards,again,against,all,almost,alone,along,already,also,although,always,am,amid,among,amongst,an,and,another,any,anyhow,anyone,anything,anyway,anywhere,are,around,as,at,back,be,became,because,become,becomes,becoming,been,before,beforehand,behind,being,below,beneath,beside,besides,between,beyond,both,bottom,but,by,can,cannot,cant,con,concerning,considering,could,couldnt,cry,de,describe,despite,do,done,down,due,during,each,eg,eight,either,eleven,else,elsewhere,empty,enough,etc,even,ever,every,everyone,everything,everywhere,except,few,fifteen,fifty,fill,find,fire,first,five,for,former,formerly,forty,found,four,from,full,further,get,give,go,had,has,hasnt,have,he,hence,her,here,hereafter,hereby,herein,hereupon,hers,herself,him,himself,his,how,however,hundred,i,ie,if,in,inc,indeed,inside,interest,into,is,it,its,itself,keep,last,latter,latterly,least,less,like,ltd,made,many,may,me,meanwhile,might,mill,mine,more,moreover,most,mostly,move,much,must,my,myself,name,namely,near,neither,never,nevertheless,next,nine,no,nobody,none,noone,nor,not,nothing,now,nowhere,of,off,often,on,once,one,only,onto,or,other,others,otherwise,our,ours,ourselves,out,outside,over,own,part,past,per,perhaps,please,put,rather,re,regarding,round,same,see,seem,seemed,seeming,seems,serious,several,she,should,show,side,since,sincere,six,sixty,so,some,somehow,someone,something,sometime,sometimes,somewhere,still,such,take,ten,than,that,the,their,them,themselves,then,thence,there,thereafter,thereby,therefore,therein,thereupon,these,they,thick,thin,third,this,those,though,three,through,throughout,thru,thus,to,together,too,top,toward,towards,twelve,twenty,two,un,under,underneath,until,unto,up,upon,us,very,via,want,was,wasnt,we,well,went,were,weve,what,whatever,when,whence,whenever,where,whereafter,whereas,whereby,wherein,whereupon,wherever,whether,which,while,whilst,whither,whoever,whole,whom,whose,why,will,with,within,without,would,yet,you,youll,your,youre,yours,yourself,yourselves,youve";
+
 // Website blacklist
 const BLACKLIST = new Set([
   "web.archive.org",
@@ -336,6 +340,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "showFofaSearch") {
     showFofaSearch();
   }
+  if (message.action === "createWordList") {
+    createWordList();
+  }
 });
 
 function htmlEntities(str) {
@@ -441,6 +448,103 @@ function showFofaSearch() {
     var newWindow = window.open(newURL, "_blank");
   } catch (error) {
     console.error("Xnl Reveal: Error in showFofaSearch:", error);
+  }
+}
+
+// Function to open a separate tab with a word list based on the current tab contents
+function createWordList() {
+  try {
+    // Convert stop words string to a Set
+    const stopWords = new Set(DEFAULT_STOP_WORDS.split(","));
+
+    // Extract the words from the current page
+    let words = document.documentElement.innerText.match(/[a-zA-Z_\-]+/g);
+    words = words.map((word) => {
+      // Remove leading '-' from words
+      if (word.startsWith("-")) {
+        word = word.substring(1);
+      }
+      return word;
+    });
+    const filteredWords = [...new Set(words)]
+      .filter((word) => word.length > 1 && !stopWords.has(word.toLowerCase()))
+      .sort();
+    const wordListText = filteredWords.join("\n");
+    const originalUrl = window.location.href;
+    const truncatedUrl =
+      originalUrl.length > 50
+        ? originalUrl.substring(0, 50) + "..."
+        : originalUrl;
+
+    // Get the URL of the CSS file and the image
+    const cssUrl = chrome.runtime.getURL("xnl.css");
+    const imageUrl = chrome.runtime.getURL("images/codemain.jpg");
+
+    // Create HTML content with the original URL, CSS link, and word list inside a textarea
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <title>Xnl Reveal: Word List</title>
+        <style>
+          @import url('${cssUrl}');
+          html, body {
+            height: 100%;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+          }
+          body {
+            background-image: url('${imageUrl}');
+          }
+          .body-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+          }
+          .popup-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+          }
+          .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+          }
+          .container textarea {
+            width: 100%;
+            height: 100%;
+            box-sizing: border-box; /* Ensures padding and border are included in the width */
+            flex: 1;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="body-wrapper">
+          <main class="popup-main">
+            <h1 class="options-heading">Xnl Reveal: Word List</h1>
+            <h2 title="${originalUrl}">Source: <a href="${originalUrl}" target="_blank">${truncatedUrl}</a></h2>
+            <div class="container options">
+              <textarea readonly>${wordListText}</textarea>
+            </div>
+          </main>
+        </div>
+      </body>
+      </html>
+    `;
+
+    // Open a new tab
+    const newTab = window.open();
+
+    // Write the HTML content into the new tab
+    newTab.document.open();
+    newTab.document.write(htmlContent);
+    newTab.document.close();
+  } catch (error) {
+    console.error("Xnl Reveal: Error in createWordList:", error);
   }
 }
 
