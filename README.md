@@ -1,6 +1,6 @@
 <center><img src="https://github.com/xnl-h4ck3r/XnlReveal/blob/main/images/title.png"></center>
 
-## About - v3.6
+## About - v3.7
 
 This is a **Chrome/Firefox Extension** that can do the following:
 
@@ -97,6 +97,7 @@ You have the following settings:
 
 - `ENABLE REVEAL` - If this is not checked then the extension will do nothing. If checked then it will take certain actions on web pages visited (if they are in scope), depending on the other options set.
 - `Show query parameter reflections` - If this is checked, then when a web page is visited that has any query parameters, a background request is made for each parameter, replacing each in turn with the **Canary token** from the Options page. If the token is found for any of the parameters in the response, then an message is written to the browser console giving you the URL and all the parameters on that page that were reflected. If the options are selected, these details can also be shown in a browser alert box and copied to the users clipboard. The extension will also show a badge with the number of reflections found.<br>
+  The browser alert box, and console message, will also show the message `CHARSET IS NOT SPECIFIED IN RESPONSE!` if the charset is not explicitly set for an HTML page. This can mean XSS could be easier with a trick explained in [this blog](https://www.sonarsource.com/blog/encoding-differentials-why-charset-matters/).<br>
   **NOTE: If there are many parameters, it can take some time to send all the requests and wait for the responses. A red status bar is displayed at the top of the page to let you know to wait. Also, if the page is dynamic, then these may not be found in the initial response and reported.**
 - `Write Wayback endpoints to console` - If this is checked, then for each location/path visited in the browser, endpoints will be retrieved from the Wayback archive and written to the console. Once a location/path has been sent to the Wayback API it will not be sent again, unless the `Clear Saved URLs/Params` has been clicked.
 - `Show hidden elements` - If this is checked, then any elements (excluding `img`,`span` and `div`) that are hidden will be shown. They will be shown with a red border and a label in red that gives some detail. Sometimes, if the page is dynamic, the elements may not be shown.

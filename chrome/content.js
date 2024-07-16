@@ -892,7 +892,7 @@ chrome.storage.sync.get(
     }
 
     // Function to process reflected parameters
-    function processReflectedParameters(reflectedParameters) {
+    function processReflectedParameters(reflectedParameters, charsetXSS) {
       const displayedParameters = [];
       let susParams = false;
 
@@ -918,10 +918,16 @@ chrome.storage.sync.get(
         }
       });
 
+      let charsetWarning = charsetXSS
+        ? "CHARSET IS NOT SPECIFIED IN RESPONSE!\n"
+        : "";
+
       reflectionConsoleMsg = `Xnl Reveal: Reflection found in URL ${
         window.location.href
-      }\nReflected Parameters: ${displayedParameters.join(", ")}`;
-      reflectionAlertMsg = `Xnl Reveal:\n\nReflection found in URL ${
+      }\n${charsetWarning}\nReflected Parameters: ${displayedParameters.join(
+        ", "
+      )}`;
+      reflectionAlertMsg = `Xnl Reveal:\n${charsetWarning}\nReflection found in URL ${
         window.location.href
       }\n\nReflected Parameters: ${displayedParameters.join(", ")}`;
       // Send a message to background.js to update the icon badge with the number of parameters found
@@ -1041,7 +1047,31 @@ chrome.storage.sync.get(
                                 response
                               ); // Handle fetch errors here
                             } else {
-                              return response.text();
+                              // Declare and initialize the contentType variable
+                              let contentType =
+                                response.headers.get("content-type") ||
+                                "text/html";
+
+                              // Check if it is a HTML response, and whether the charset is set in the headers or in a meta tag
+                              if (
+                                contentType.includes("text/html") &&
+                                !contentType.includes("charset=")
+                              ) {
+                                return response.text().then((text) => {
+                                  if (
+                                    !text.includes("<meta charset=") &&
+                                    !text.includes("text/html; charset=")
+                                  ) {
+                                    charsetXSS = true;
+                                  } else {
+                                    charsetXSS = false;
+                                  }
+                                  return text;
+                                });
+                              } else {
+                                charsetXSS = false;
+                                return response.text();
+                              }
                             }
                           })
                           .then((text) => {
@@ -1062,7 +1092,10 @@ chrome.storage.sync.get(
                             // Check if we have processed all parameters and found reflections
                             if (successfulRequests === params.size) {
                               if (reflectedParameters.length > 0) {
-                                processReflectedParameters(reflectedParameters);
+                                processReflectedParameters(
+                                  reflectedParameters,
+                                  charsetXSS
+                                );
                               }
                               // Remove the status bar once all requests are processed
                               statusBar.remove();

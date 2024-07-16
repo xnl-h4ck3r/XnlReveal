@@ -1,5 +1,11 @@
 ## Changelog
 
+- v3.7
+
+  - New
+
+    - The string `CHARSET IS NOT SPECIFIED IN RESPONSE!` will be displayed in the browser message box, and in the console, if the content type of the page is `text/html` but the charset is not set on the content type, or in the body via a meta tag. This is to highlight endpoints where XSS could be easier, based on the research in the blog https://www.sonarsource.com/blog/encoding-differentials-why-charset-matters/?utm_medium=social&utm_source=twitter&utm_campaign=researc
+
 - v3.6
 
   - New
