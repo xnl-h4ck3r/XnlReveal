@@ -49,7 +49,7 @@ Clone this repo to your machine and then follow the instructions below, dependin
 
 ### Firefox
 
-**IMPORTANT: With Firefox extensions, you will need to load it each time you open Firefox**
+**IMPORTANT: With Firefox extensions, you will need to load it each time you open Firefox. Unfortunately I cannot add to the Firefox store to prevent this because it must be Manifest v3 to do that. XNL Reveal has to use Manifest v2 (unless someone else can figure it out, because I couldn't) which has less security restrictions allowing it to work.**
 
 1. Go to `about:debugging` in a new browser tab.
 

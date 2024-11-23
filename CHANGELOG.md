@@ -1,5 +1,15 @@
 ## Changelog
 
+- v3.8
+
+- New
+
+  - Explain in Firefox setup why it can't be added to the Firefox Add-on store, and therefore has to be reloaded every time.
+
+- Changed
+
+  - Correct XNL Reveal version in manifest files.
+
 - v3.7
 
   - New
