@@ -133,6 +133,7 @@ browser.contextMenus.removeAll(() => {
   browser.contextMenus.create(contextMenuDisabled);
   browser.contextMenus.create(contextMenuGoogle);
   browser.contextMenus.create(contextMenuFofa);
+  browser.contextMenus.create(contextMenuWordlist);
 });
 
 browser.contextMenus.onClicked.addListener(function (clickData) {

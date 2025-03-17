@@ -658,6 +658,7 @@ function showHiddenElements() {
 chrome.storage.sync.get(
   [
     "canaryToken",
+    "checkSpecialChars",
     "showAlerts",
     "copyToClipboard",
     "paramBlacklist",
@@ -705,6 +706,12 @@ chrome.storage.sync.get(
       canaryToken = "xnlreveal";
     } else {
       canaryToken = result.canaryToken || "xnlreveal";
+    }
+    if (result.checkSpecialChars === undefined) {
+      chrome.storage.sync.set({ ["checkSpecialChars"]: false });
+      checkSpecialChars = false;
+    } else {
+      checkSpecialChars = result.checkSpecialChars;
     }
     if (result.showAlerts === undefined) {
       chrome.storage.sync.set({ ["showAlerts"]: true });
@@ -891,13 +898,193 @@ chrome.storage.sync.get(
         });
     }
 
+    function runAfterPageLoad() {
+      try {
+        chrome.runtime.sendMessage({ action: "getTabInfo" });
+
+        if (
+          extensionDisabled === "false" &&
+          (hiddenDisabled === "false" ||
+            disabledDisabled === "false" ||
+            reflectionsDisabled === "false" ||
+            waybackDisabled === "false")
+        ) {
+          isHostInScope((inScope) => {
+            if (inScope) {
+              if (waybackDisabled === "false") writeWaybackEndpoints();
+              if (hiddenDisabled === "false") showHiddenElements();
+              if (disabledDisabled === "false") enableDisabledElements();
+
+              if (reflectionsDisabled === "false") {
+                const params = new URLSearchParams(window.location.search);
+                const reflectedParameters = [];
+                let successfulRequests = 0;
+
+                params.forEach((value, key) => {
+                  let specialChars = "";
+                  const blacklistArray = paramBlacklist
+                    .split(",")
+                    .map((param) => param.trim());
+                  if (
+                    (blacklistArray.length === 1 &&
+                      blacklistArray[0] === key) ||
+                    blacklistArray.includes(key)
+                  ) {
+                    successfulRequests++;
+                    return;
+                  }
+
+                  const performFetch = (withSpecialChars) => {
+                    const modifiedParams = new URLSearchParams(params);
+                    if (withSpecialChars && checkSpecialChars) {
+                      modifiedParams.set(key, canaryToken + `"'<xnl`);
+                    } else {
+                      modifiedParams.set(key, canaryToken);
+                    }
+                    const modifiedURL = `${window.location.origin}${window.location.pathname}?${modifiedParams}`;
+                    const modifiedURLForStorage = replaceParameterValues(
+                      window.location.href,
+                      canaryToken
+                    );
+
+                    chrome.storage.local.get(
+                      [modifiedURLForStorage, key],
+                      ({
+                        [modifiedURLForStorage]: urlData,
+                        [key]: paramData,
+                      }) => {
+                        if (!urlData || !paramData) {
+                          const timeoutPromise = new Promise(
+                            (resolve, reject) => {
+                              const timeoutError = new Error(
+                                `Xnl Reveal: Fetch timed out checking param "${key}" for URL: ${modifiedURL}`
+                              );
+                              setTimeout(() => reject(timeoutError), 30000);
+                            }
+                          );
+
+                          document.body.appendChild(statusBar);
+                          console.log(`Xnl Reveal: Fetching ${modifiedURL}`);
+
+                          Promise.race([fetch(modifiedURL), timeoutPromise])
+                            .then((response) => {
+                              if (response instanceof Error) {
+                                console.error(
+                                  "Xnl Reveal: Fetch error:",
+                                  response
+                                );
+                              } else {
+                                if (!response.ok) {
+                                  console.warn(
+                                    `Xnl Reveal: Non-2xx Response (${response.status}) for ${modifiedURL}`
+                                  );
+                                }
+                                let contentType =
+                                  response.headers.get("content-type") ||
+                                  "text/html";
+
+                                if (
+                                  contentType.includes("text/html") &&
+                                  !contentType.includes("charset=")
+                                ) {
+                                  return response.text().then((text) => {
+                                    charsetXSS =
+                                      !text.includes("<meta charset=") &&
+                                      !text.includes("text/html; charset=");
+                                    return text;
+                                  });
+                                } else {
+                                  charsetXSS = false;
+                                  return response.text();
+                                }
+                              }
+                            })
+                            .then((text) => {
+                              if (checkSpecialChars && withSpecialChars) {
+                                const canaryRegex = new RegExp(
+                                  canaryToken + `.*?(['"<])xnl`
+                                );
+                                const match = canaryRegex.exec(text);
+
+                                if (match) {
+                                  const afterCanary = match[0];
+                                  if (afterCanary.includes("'"))
+                                    specialChars += "'";
+                                  if (afterCanary.includes('"'))
+                                    specialChars += '"';
+                                  if (afterCanary.includes("<"))
+                                    specialChars += "<";
+
+                                  reflectedParameters.push({
+                                    key,
+                                    specialChars,
+                                  });
+                                } else {
+                                  // Retry without special characters
+                                  performFetch(false);
+                                  return;
+                                }
+                              }
+
+                              if (specialChars === "") {
+                                if (text.includes(canaryToken)) {
+                                  reflectedParameters.push({
+                                    key,
+                                    specialChars,
+                                  });
+                                }
+                              }
+
+                              const alertData = {
+                                [modifiedURLForStorage]: true,
+                                [key]: true,
+                              };
+                              chrome.storage.local.set(alertData);
+                              successfulRequests++;
+
+                              if (successfulRequests === params.size) {
+                                if (reflectedParameters.length > 0) {
+                                  processReflectedParameters(
+                                    reflectedParameters,
+                                    charsetXSS
+                                  );
+                                }
+                                statusBar.remove();
+                              }
+                            })
+                            .catch((error) => {
+                              console.error("Xnl Reveal: Fetch error:", error);
+                              successfulRequests++;
+                              if (successfulRequests === params.size) {
+                                statusBar.remove();
+                              }
+                            });
+                        }
+                      }
+                    );
+                  };
+
+                  performFetch(true);
+                });
+              }
+            }
+          });
+        }
+      } catch (error) {
+        console.error("Xnl Reveal: An error occurred:", error);
+        statusBar.remove();
+      }
+    }
+
     // Function to process reflected parameters
     function processReflectedParameters(reflectedParameters, charsetXSS) {
       const displayedParameters = [];
       let susParams = false;
 
-      // Check if any reflected parameters appear in SUS parameter lists
-      reflectedParameters.forEach((param) => {
+      // Check if any reflected parameters appear in SUS parameter lists and whether to include special characters
+      reflectedParameters.forEach(({ key, specialChars }) => {
+        param = key;
+
         susTypes = "";
         susTypes += SUS_CMDI.has(param) ? "CMDi | " : "";
         susTypes += SUS_DEBUG.has(param) ? "DEBUG | " : "";
@@ -909,6 +1096,15 @@ chrome.storage.sync.get(
         susTypes += SUS_SSTI.has(param) ? "SSTI | " : "";
         susTypes += SUS_XSS.has(param) ? "XSS | " : "";
         susTypes += SUS_MASSASSIGNMENT.has(param) ? "MASS-ASSIGN | " : "";
+
+        // Include special characters that were reflected
+        if (specialChars != "") {
+          const spacedSpecialChars = specialChars
+            .toString()
+            .split("")
+            .join(" ");
+          param = param + " (plus special chars " + spacedSpecialChars + ")";
+        }
 
         if (susTypes != "") {
           displayedParameters.push(param + " [" + susTypes.slice(0, -3) + "]");
@@ -951,182 +1147,6 @@ chrome.storage.sync.get(
       }
 
       return reflectionConsoleMsg;
-    }
-
-    function runAfterPageLoad() {
-      try {
-        // Send a message to the background script to request tab information
-        chrome.runtime.sendMessage({ action: "getTabInfo" });
-
-        // Check if the extension is enabled, an option is selected, and the current tab is in scope
-        if (
-          extensionDisabled === "false" &&
-          (hiddenDisabled === "false" ||
-            disabledDisabled === "false" ||
-            reflectionsDisabled === "false" ||
-            waybackDisabled === "false")
-        ) {
-          // Call isHostInScope with a callback to handle the result
-          isHostInScope((inScope) => {
-            if (inScope) {
-              // Write wayback endpoints to console if the option is checked
-              if (waybackDisabled === "false") {
-                writeWaybackEndpoints();
-              }
-              // Show hidden fields if the option is checked
-              if (hiddenDisabled === "false") {
-                showHiddenElements();
-              }
-              // Enable disabled fields if the option is checked
-              if (disabledDisabled === "false") {
-                enableDisabledElements();
-              }
-              // Process reflections if enabled
-              if (reflectionsDisabled === "false") {
-                const params = new URLSearchParams(window.location.search);
-                const reflectedParameters = [];
-
-                // Initialize a counter to keep track of successful requests
-                let successfulRequests = 0;
-
-                params.forEach((value, key) => {
-                  // Check if the parameter name is in the blacklist. If it is then skip it
-                  const blacklistArray = paramBlacklist
-                    .split(",")
-                    .map((param) => param.trim()); // Trim each parameter
-                  if (
-                    (blacklistArray.length === 1 &&
-                      blacklistArray[0] === key) ||
-                    blacklistArray.includes(key)
-                  ) {
-                    // Increment the successful requests counter
-                    successfulRequests++;
-                    return;
-                  }
-
-                  // Create a modified URL by replacing the current parameter's value
-                  const modifiedParams = new URLSearchParams(params);
-                  modifiedParams.set(key, canaryToken);
-                  const modifiedURL = `${window.location.origin}${window.location.pathname}?${modifiedParams}`;
-
-                  // Create a modified URL with parameter values replaced with the canary token for storage. This will ensure the same url with different parameter values does not cause the alert to be fired again
-                  const modifiedURLForStorage = replaceParameterValues(
-                    window.location.href,
-                    canaryToken
-                  );
-
-                  // Check if this URL and parameter have already triggered an alert
-                  chrome.storage.local.get(
-                    [modifiedURLForStorage, key],
-                    ({
-                      [modifiedURLForStorage]: urlData,
-                      [key]: paramData,
-                    }) => {
-                      if (!urlData || !paramData) {
-                        // Initialize a timeout promise
-                        const timeoutPromise = new Promise(
-                          (resolve, reject) => {
-                            const timeoutError = new Error(
-                              `Xnl Reveal: Fetch timed out checking param "${key}" for URL: ${modifiedURL}`
-                            );
-                            setTimeout(() => {
-                              reject(timeoutError);
-                            }, 30000); // 30 seconds
-                          }
-                        );
-
-                        document.body.appendChild(statusBar);
-
-                        console.log(`Xnl Reveal: Fetching ${modifiedURL}`);
-                        // Perform the fetch for this specific parameter
-                        Promise.race([fetch(modifiedURL), timeoutPromise])
-                          .then((response) => {
-                            if (response instanceof Error) {
-                              console.error(
-                                "Xnl Reveal: Fetch error:",
-                                response
-                              ); // Handle fetch errors here
-                            } else {
-                              // Declare and initialize the contentType variable
-                              let contentType =
-                                response.headers.get("content-type") ||
-                                "text/html";
-
-                              // Check if it is a HTML response, and whether the charset is set in the headers or in a meta tag
-                              if (
-                                contentType.includes("text/html") &&
-                                !contentType.includes("charset=")
-                              ) {
-                                return response.text().then((text) => {
-                                  if (
-                                    !text.includes("<meta charset=") &&
-                                    !text.includes("text/html; charset=")
-                                  ) {
-                                    charsetXSS = true;
-                                  } else {
-                                    charsetXSS = false;
-                                  }
-                                  return text;
-                                });
-                              } else {
-                                charsetXSS = false;
-                                return response.text();
-                              }
-                            }
-                          })
-                          .then((text) => {
-                            // Check if the random string is reflected in the response
-                            if (text.includes(canaryToken)) {
-                              reflectedParameters.push(key);
-                            }
-                            // Mark this URL and parameter as alerted
-                            const alertData = {
-                              [modifiedURLForStorage]: true,
-                              [key]: true,
-                            };
-                            chrome.storage.local.set(alertData);
-
-                            // Increment the successful requests counter
-                            successfulRequests++;
-
-                            // Check if we have processed all parameters and found reflections
-                            if (successfulRequests === params.size) {
-                              if (reflectedParameters.length > 0) {
-                                processReflectedParameters(
-                                  reflectedParameters,
-                                  charsetXSS
-                                );
-                              }
-                              // Remove the status bar once all requests are processed
-                              statusBar.remove();
-                            }
-                          })
-                          .catch((error) => {
-                            console.error("Xnl Reveal: Fetch error:", error); // Handle fetch errors here
-
-                            // Increment the successful requests counter even for failed requests
-                            successfulRequests++;
-
-                            // Check if we have processed all parameters
-                            if (successfulRequests === params.size) {
-                              statusBar.remove(); // Remove the status bar once all requests are processed
-                            }
-                          });
-                      }
-                    }
-                  );
-                });
-              }
-            }
-          });
-        }
-      } catch (error) {
-        // Handle other errors here
-        console.error("Xnl Reveal: An error occurred:", error);
-
-        // Remove the status bar if an error occurs
-        statusBar.remove();
-      }
     }
 
     // Use the window.onload event to trigger your code after the page has loaded.

@@ -1,4 +1,7 @@
 const canaryTokenInput = document.getElementById("canaryTokenInput");
+const checkSpecialCharsInput = document.getElementById(
+  "checkSpecialCharsInput"
+);
 const showAlertsInput = document.getElementById("showAlertsInput");
 const copyToClipboardInput = document.getElementById("copyToClipboardInput");
 const paramBlacklistInput = document.getElementById("paramBlacklistInput");
@@ -28,9 +31,12 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 // Load the user's options
-// Load the user's options
 browser.storage.sync.get(["canaryToken"], (result) => {
   canaryTokenInput.value = result.canaryToken || "xnlreveal";
+});
+browser.storage.sync.get(["checkSpecialChars"], (result) => {
+  checkSpecialCharsInput.checked =
+    result.checkSpecialChars !== undefined ? result.checkSpecialChars : false;
 });
 browser.storage.sync.get(["showAlerts"], (result) => {
   showAlertsInput.checked =
@@ -127,6 +133,7 @@ saveButton.addEventListener("click", (e) => {
   e.preventDefault(); // Prevent the form from actually submitting
 
   let canaryToken = canaryTokenInput.value;
+  let checkSpecialChars = checkSpecialCharsInput.checked;
   const showAlerts = showAlertsInput.checked;
   const copyToClipboard = copyToClipboardInput.checked;
   let paramBlacklist = paramBlacklistInput.value;
@@ -153,6 +160,7 @@ saveButton.addEventListener("click", (e) => {
 
   // Save all options
   browser.storage.sync.set({ canaryToken });
+  browser.storage.sync.set({ checkSpecialChars });
   browser.storage.sync.set({ showAlerts });
   browser.storage.sync.set({ copyToClipboard });
   browser.storage.sync.set({ paramBlacklist });

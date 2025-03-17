@@ -15,6 +15,10 @@ statusBar.style.zIndex = "9999";
 // Define a global constant for ignored src strings
 const IGNORED_STRINGS = "googletagmanager|doubleclick|google-analytics";
 
+// Default english "stop word" list
+const DEFAULT_STOP_WORDS =
+  "a,aboard,about,above,across,after,afterwards,again,against,all,almost,alone,along,already,also,although,always,am,amid,among,amongst,an,and,another,any,anyhow,anyone,anything,anyway,anywhere,are,around,as,at,back,be,became,because,become,becomes,becoming,been,before,beforehand,behind,being,below,beneath,beside,besides,between,beyond,both,bottom,but,by,can,cannot,cant,con,concerning,considering,could,couldnt,cry,de,describe,despite,do,done,down,due,during,each,eg,eight,either,eleven,else,elsewhere,empty,enough,etc,even,ever,every,everyone,everything,everywhere,except,few,fifteen,fifty,fill,find,fire,first,five,for,former,formerly,forty,found,four,from,full,further,get,give,go,had,has,hasnt,have,he,hence,her,here,hereafter,hereby,herein,hereupon,hers,herself,him,himself,his,how,however,hundred,i,ie,if,in,inc,indeed,inside,interest,into,is,it,its,itself,keep,last,latter,latterly,least,less,like,ltd,made,many,may,me,meanwhile,might,mill,mine,more,moreover,most,mostly,move,much,must,my,myself,name,namely,near,neither,never,nevertheless,next,nine,no,nobody,none,noone,nor,not,nothing,now,nowhere,of,off,often,on,once,one,only,onto,or,other,others,otherwise,our,ours,ourselves,out,outside,over,own,part,past,per,perhaps,please,put,rather,re,regarding,round,same,see,seem,seemed,seeming,seems,serious,several,she,should,show,side,since,sincere,six,sixty,so,some,somehow,someone,something,sometime,sometimes,somewhere,still,such,take,ten,than,that,the,their,them,themselves,then,thence,there,thereafter,thereby,therefore,therein,thereupon,these,they,thick,thin,third,this,those,though,three,through,throughout,thru,thus,to,together,too,top,toward,towards,twelve,twenty,two,un,under,underneath,until,unto,up,upon,us,very,via,want,was,wasnt,we,well,went,were,weve,what,whatever,when,whence,whenever,where,whereafter,whereas,whereby,wherein,whereupon,wherever,whether,which,while,whilst,whither,whoever,whole,whom,whose,why,will,with,within,without,would,yet,you,youll,your,youre,yours,yourself,yourselves,youve";
+
 // Website blacklist
 const BLACKLIST = new Set([
   "web.archive.org",
@@ -336,6 +340,9 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "showFofaSearch") {
     showFofaSearch();
   }
+  if (message.action === "createWordList") {
+    createWordList();
+  }
 });
 
 function htmlEntities(str) {
@@ -441,6 +448,45 @@ function showFofaSearch() {
     var newWindow = window.open(newURL, "_blank");
   } catch (error) {
     console.error("Xnl Reveal: Error in showFofaSearch:", error);
+  }
+}
+
+function createWordList() {
+  try {
+    const runtime = typeof browser !== "undefined" ? browser : chrome;
+
+    // Convert stop words string to a Set
+    const stopWords = new Set(DEFAULT_STOP_WORDS.split(","));
+
+    // Extract the words from the current page
+    let words = document.documentElement.innerText.match(/[a-zA-Z_\-]+/g);
+    words = words.map((word) => {
+      if (word.startsWith("-")) word = word.substring(1);
+      return word;
+    });
+
+    const filteredWords = [...new Set(words)]
+      .filter((word) => word.length > 1 && !stopWords.has(word.toLowerCase()))
+      .sort();
+    const wordListText = filteredWords.join("\n");
+    const originalUrl = window.location.href;
+    const truncatedUrl =
+      originalUrl.length > 50
+        ? originalUrl.substring(0, 50) + "..."
+        : originalUrl;
+
+    // Open the new tab and send data
+    const newTab = runtime.runtime.getURL("wordlist.html");
+    window.open(newTab);
+
+    runtime.runtime.sendMessage({
+      action: "showWordList",
+      url: originalUrl,
+      truncatedUrl: truncatedUrl,
+      wordList: wordListText,
+    });
+  } catch (error) {
+    console.error("Xnl Reveal: Error in createWordList:", error);
   }
 }
 
@@ -554,6 +600,7 @@ function showHiddenElements() {
 browser.storage.sync.get(
   [
     "canaryToken",
+    "checkSpecialChars",
     "showAlerts",
     "copyToClipboard",
     "paramBlacklist",
@@ -601,6 +648,12 @@ browser.storage.sync.get(
       canaryToken = "xnlreveal";
     } else {
       canaryToken = result.canaryToken || "xnlreveal";
+    }
+    if (result.checkSpecialChars === undefined) {
+      browser.storage.sync.set({ ["checkSpecialChars"]: false });
+      checkSpecialChars = false;
+    } else {
+      checkSpecialChars = result.checkSpecialChars;
     }
     if (result.showAlerts === undefined) {
       browser.storage.sync.set({ ["showAlerts"]: true });
@@ -796,8 +849,10 @@ browser.storage.sync.get(
       const displayedParameters = [];
       let susParams = false;
 
-      // Check if any reflected parameters appear in SUS parameter lists
-      reflectedParameters.forEach((param) => {
+      // Check if any reflected parameters appear in SUS parameter lists and whether to include special characters
+      reflectedParameters.forEach(({ key, specialChars }) => {
+        param = key;
+
         susTypes = "";
         susTypes += SUS_CMDI.has(param) ? "CMDi | " : "";
         susTypes += SUS_DEBUG.has(param) ? "DEBUG | " : "";
@@ -809,6 +864,15 @@ browser.storage.sync.get(
         susTypes += SUS_SSTI.has(param) ? "SSTI | " : "";
         susTypes += SUS_XSS.has(param) ? "XSS | " : "";
         susTypes += SUS_MASSASSIGNMENT.has(param) ? "MASS-ASSIGN | " : "";
+
+        // Include special characters that were reflected
+        if (specialChars != "") {
+          const spacedSpecialChars = specialChars
+            .toString()
+            .split("")
+            .join(" ");
+          param = param + " (plus special chars " + spacedSpecialChars + ")";
+        }
 
         if (susTypes != "") {
           displayedParameters.push(param + " [" + susTypes.slice(0, -3) + "]");
@@ -853,6 +917,185 @@ browser.storage.sync.get(
       return reflectionConsoleMsg;
     }
 
+    function runAfterPageLoad() {
+      try {
+        browser.runtime.sendMessage({ action: "getTabInfo" });
+
+        if (
+          extensionDisabled === "false" &&
+          (hiddenDisabled === "false" ||
+            disabledDisabled === "false" ||
+            reflectionsDisabled === "false" ||
+            waybackDisabled === "false")
+        ) {
+          isHostInScope((inScope) => {
+            if (inScope) {
+              if (waybackDisabled === "false") writeWaybackEndpoints();
+              if (hiddenDisabled === "false") showHiddenElements();
+              if (disabledDisabled === "false") enableDisabledElements();
+
+              if (reflectionsDisabled === "false") {
+                const params = new URLSearchParams(window.location.search);
+                const reflectedParameters = [];
+                let successfulRequests = 0;
+
+                params.forEach((value, key) => {
+                  let specialChars = "";
+                  const blacklistArray = paramBlacklist
+                    .split(",")
+                    .map((param) => param.trim());
+                  if (
+                    (blacklistArray.length === 1 &&
+                      blacklistArray[0] === key) ||
+                    blacklistArray.includes(key)
+                  ) {
+                    successfulRequests++;
+                    return;
+                  }
+
+                  const performFetch = (withSpecialChars) => {
+                    const modifiedParams = new URLSearchParams(params);
+                    if (withSpecialChars && checkSpecialChars) {
+                      modifiedParams.set(key, canaryToken + `"'<xnl`);
+                    } else {
+                      modifiedParams.set(key, canaryToken);
+                    }
+                    const modifiedURL = `${window.location.origin}${window.location.pathname}?${modifiedParams}`;
+                    const modifiedURLForStorage = replaceParameterValues(
+                      window.location.href,
+                      canaryToken
+                    );
+
+                    browser.storage.local.get(
+                      [modifiedURLForStorage, key],
+                      ({
+                        [modifiedURLForStorage]: urlData,
+                        [key]: paramData,
+                      }) => {
+                        if (!urlData || !paramData) {
+                          const timeoutPromise = new Promise(
+                            (resolve, reject) => {
+                              const timeoutError = new Error(
+                                `Xnl Reveal: Fetch timed out checking param "${key}" for URL: ${modifiedURL}`
+                              );
+                              setTimeout(() => reject(timeoutError), 30000);
+                            }
+                          );
+
+                          document.body.appendChild(statusBar);
+                          console.log(`Xnl Reveal: Fetching ${modifiedURL}`);
+
+                          Promise.race([fetch(modifiedURL), timeoutPromise])
+                            .then((response) => {
+                              if (response instanceof Error) {
+                                console.error(
+                                  "Xnl Reveal: Fetch error:",
+                                  response
+                                );
+                              } else {
+                                if (!response.ok) {
+                                  console.warn(
+                                    `Xnl Reveal: Non-2xx Response (${response.status}) for ${modifiedURL}`
+                                  );
+                                }
+                                let contentType =
+                                  response.headers.get("content-type") ||
+                                  "text/html";
+
+                                if (
+                                  contentType.includes("text/html") &&
+                                  !contentType.includes("charset=")
+                                ) {
+                                  return response.text().then((text) => {
+                                    charsetXSS =
+                                      !text.includes("<meta charset=") &&
+                                      !text.includes("text/html; charset=");
+                                    return text;
+                                  });
+                                } else {
+                                  charsetXSS = false;
+                                  return response.text();
+                                }
+                              }
+                            })
+                            .then((text) => {
+                              if (checkSpecialChars && withSpecialChars) {
+                                const canaryRegex = new RegExp(
+                                  canaryToken + `.*?(['"<])xnl`
+                                );
+                                const match = canaryRegex.exec(text);
+
+                                if (match) {
+                                  const afterCanary = match[0];
+                                  if (afterCanary.includes("'"))
+                                    specialChars += "'";
+                                  if (afterCanary.includes('"'))
+                                    specialChars += '"';
+                                  if (afterCanary.includes("<"))
+                                    specialChars += "<";
+
+                                  reflectedParameters.push({
+                                    key,
+                                    specialChars,
+                                  });
+                                } else {
+                                  // Retry without special characters
+                                  performFetch(false);
+                                  return;
+                                }
+                              }
+
+                              if (specialChars === "") {
+                                if (text.includes(canaryToken)) {
+                                  reflectedParameters.push({
+                                    key,
+                                    specialChars,
+                                  });
+                                }
+                              }
+
+                              const alertData = {
+                                [modifiedURLForStorage]: true,
+                                [key]: true,
+                              };
+                              browser.storage.local.set(alertData);
+                              successfulRequests++;
+
+                              if (successfulRequests === params.size) {
+                                if (reflectedParameters.length > 0) {
+                                  processReflectedParameters(
+                                    reflectedParameters,
+                                    charsetXSS
+                                  );
+                                }
+                                statusBar.remove();
+                              }
+                            })
+                            .catch((error) => {
+                              console.error("Xnl Reveal: Fetch error:", error);
+                              successfulRequests++;
+                              if (successfulRequests === params.size) {
+                                statusBar.remove();
+                              }
+                            });
+                        }
+                      }
+                    );
+                  };
+
+                  performFetch(true);
+                });
+              }
+            }
+          });
+        }
+      } catch (error) {
+        console.error("Xnl Reveal: An error occurred:", error);
+        statusBar.remove();
+      }
+    }
+
+    /*
     function runAfterPageLoad() {
       try {
         // Send a message to the background script to request tab information
@@ -1028,6 +1271,7 @@ browser.storage.sync.get(
         statusBar.remove();
       }
     }
+    */
 
     // Use the window.onload event to trigger your code after the page has loaded.
     if (window.onload) {

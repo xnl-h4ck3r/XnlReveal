@@ -1,11 +1,12 @@
 <center><img src="https://github.com/xnl-h4ck3r/XnlReveal/blob/main/images/title.png"></center>
 
-## About - v3.7
+## About - v3.9
 
 This is a **Chrome/Firefox Extension** that can do the following:
 
 - For hosts that are in scope:
   - Show an alert for any query parameters that are reflected (and identify "sus" parameters).
+  - Optionally check if the characters `'`,`"` and `<` are reflected without being encoded.
   - Write details of reflected parameters to the browser console.
   - Copy details of reflected parameters to the users clipboard.
   - Show the Wayback Archive endpoints for the path visited (in browser console).
@@ -73,6 +74,7 @@ Clone this repo to your machine and then follow the instructions below, dependin
 You have the following options:
 
 - `Canary token` - When requests are made to test for reflection of query parameters, this is the value of the parameter that is used and checked for.
+- `Check for reflection of ' " <` - When requests are made to test for reflection of query parameters, the string `'",xnl` is appended to the end of the `Canary token`. If any of these characters reflect without being encoded, then this will also be reported. If passing those characters cause the `Canary token` not to be reflected at all (maybe a WAF blocks the `<`), then another request will be made just with the `Canary token`.
 - `Show alert box for reflections` - If this is selected, and `Show query parameter reflections` is selected on the Popup menu (see below) then a browser alert box will be displayed with details of any query parameters that reflect.
 - `Copy reflection text to clipboard` - If this is selected, and `Show query parameter reflections` is selected on the Popup menu (see below), when parameter reflections are found, the details are put in the users clipboard as-well as shown in the console (and on an alert box if requested). This means that as soon as you see an alert box or details in teh console, you can go to your notes and paste the details straight away. **IMPORTANT: The browser may aks for the sites permission to interact with the clipboard. You need to accept this to use this functionality.**
 - `Param blacklist` - This is a comma separated list of parameter names (e.g. `param1,param2`) that you do not want to replace with the canary token to check if it reflects. This can be used when testing certain parameters causes problems, e.g. logging you out.
@@ -133,6 +135,7 @@ If you manually run an option from the context menu and nothing happens, you may
 - Allow the user to alter the Wayback API URL that gets called so exclusions can be edited.
 - Look at registering the extension so you don't need to reload each time in Firefox.
 - Try to fix the intermittent error of `Error copying to clipboard (NotAllowedError: Document is not focused.)`
+- Check for reflection of the parameter values in the original response, without making any extra requests. Also allow a blacklist of values not to report as reflections, e.g. `true`,`false`,`1`, etc. as there will be a lot of false positives.
 
 ## Issues
 

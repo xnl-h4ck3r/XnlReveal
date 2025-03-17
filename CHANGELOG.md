@@ -1,5 +1,11 @@
 ## Changelog
 
+- v3.9
+
+  - New
+
+    - For both Chrome and Firefox, add a new Option `Check for reflection of ' " <`. If this is set to `Off` then each parameter is just tested with the canary token as before. However, if set to `On` then the string `'"<xnl` is added to the end of the canary token. A check is made whether any of the special characters `'`,`"` or `<` are reflected without being encoded, and are reported in the alert box and console. If the canary token is not reflected at all, then the special characters may have been blocked by a WAF or something, so a request is made with just the canary token if necessary.
+
 - v3.8
 
 - New
