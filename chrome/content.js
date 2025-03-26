@@ -879,8 +879,7 @@ chrome.storage.sync.get(
     function replaceParameterValues(url, replacement) {
       const urlObject = new URL(url);
       const params = urlObject.searchParams;
-      for (let i = 0; i < params.keys().length; i++) {
-        const key = params.keys()[i];
+      for (const key of params.keys()) {
         params.set(key, replacement);
       }
       return urlObject.toString();

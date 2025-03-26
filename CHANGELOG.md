@@ -1,5 +1,11 @@
 ## Changelog
 
+- v3.10
+
+  - Changed
+
+    - BUG FIX: Once a URL is tested, it shouldn't be tested again if everything is the same apart from parameter values. This wasn't always working, so is now fixed.
+
 - v3.9
 
   - New
