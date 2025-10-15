@@ -128,7 +128,7 @@ Messages about parameter reflections and wayback endpoints were previously writt
 - `Copy All Messages` - Copy all messages to the clipboard so you can paste into your notes!
 - `Clear Messages and Cache` - Clear all the messages from the tab and local storage. It will also clear what wayback endpoints have been searched for previously.
 
-<center><img src="https://github.com/xnl-h4ck3r/XnlReveal/blob/main/images/context.png"></center>
+<center><img src="https://github.com/xnl-h4ck3r/XnlReveal/blob/main/images/tab.png"></center>
 
 ## Important
 
