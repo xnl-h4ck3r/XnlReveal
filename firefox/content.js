@@ -1,3 +1,17 @@
+// Helper function to log to devtools panel
+function logToDevtools(message, type = "info") {
+  // Send message to background script (which will handle storage and forwarding)
+  browser.runtime
+    .sendMessage({
+      action: "logToDevtools",
+      message: message,
+      logType: type,
+    })
+    .catch((error) => {
+      console.error("Error sending to devtools:", error);
+    });
+}
+
 // Create a status bar element
 const statusBar = document.createElement("div");
 statusBar.textContent =
@@ -26,7 +40,7 @@ const BLACKLIST = new Set([
   "en.fofa.info",
 ]);
 
-// Sus Parameters from @jhaddix and @G0LDEN_infosec
+// Sus Parameters from @jhaddix, @G0LDEN_infosec and @ryancbarnett
 const SUS_CMDI = new Set([
   "execute",
   "dir",
@@ -37,6 +51,20 @@ const SUS_CMDI = new Set([
   "download",
   "ip",
   "upload",
+  "message",
+  "input_file",
+  "format",
+  "expression",
+  "data",
+  "bsh",
+  "bash",
+  "shell",
+  "command",
+  "range",
+  "sort",
+  "host",
+  "exec",
+  "code",
 ]);
 const SUS_DEBUG = new Set([
   "test",
@@ -65,6 +93,7 @@ const SUS_DEBUG = new Set([
   "rename",
   "debug",
   "modify",
+  "stacktrace",
 ]);
 const SUS_FILEINC = new Set([
   "root",
@@ -91,6 +120,12 @@ const SUS_FILEINC = new Set([
   "api",
   "app",
   "resource-type",
+  "controller",
+  "filename",
+  "page",
+  "f",
+  "view",
+  "input_file",
 ]);
 const SUS_IDOR = new Set([
   "count",
@@ -172,8 +207,14 @@ const SUS_SQLI = new Set([
   "phone_number",
   "delete",
   "report",
+  "q",
+  "sql",
 ]);
 const SUS_SSRF = new Set([
+  "sector_identifier_uri",
+  "request_uris",
+  "logo_uri",
+  "jwks_uri",
   "start",
   "path",
   "domain",
@@ -212,6 +253,8 @@ const SUS_SSRF = new Set([
   "data",
   "ip",
   "redirect",
+  "target",
+  "referer",
 ]);
 const SUS_SSTI = new Set([
   "preview",
@@ -302,6 +345,16 @@ const SUS_XSS = new Set([
   "c",
   "shop",
   "redirect",
+  "page",
+  "prefv1",
+  "destination",
+  "mode",
+  "data",
+  "error",
+  "editor",
+  "wysiwyg",
+  "widget",
+  "msg",
 ]);
 
 // Additional Sus Parameters
@@ -377,7 +430,7 @@ function dynamicScopeMenuItem(action, host) {
       if (browser.runtime.lastError) {
         console.error("Error saving scopeItems:", browser.runtime.lastError);
       } else {
-        console.log(
+        logToDevtools(
           `Xnl Reveal: Scope - successfully ${
             action === "Add" ? "added" : "removed"
           } ${host}.`
@@ -395,7 +448,8 @@ function showWaybackEndpoints() {
     var currentURL = encodeURIComponent(
       window.location.hostname.replace(/^www\./, "")
     );
-    console.log(`Xnl Reveal: Wayback location ${currentURL}`);
+    // Don't log when opening Wayback in new tab
+    // logToDevtools(`Xnl Reveal: Wayback location ${currentURL}`);
     var newURL =
       "https://web.archive.org/cdx/search/cdx?url=*." +
       currentURL +
@@ -710,41 +764,82 @@ browser.storage.sync.get(
                     console.error(browser.runtime.lastError);
                     return;
                   }
-                  const { waybackData, error } = response;
+                  const { waybackData, error, statusCode, url, timeout } = response;
                   if (error) {
-                    // Handle the error if there's one
-                    console.log(
-                      "Xnl Reveal: Error fetching Wayback Machine data:",
-                      error
+                    // Handle the error if there's one - don't mark as visited on error
+                    if (timeout) {
+                      logToDevtools(
+                        `Xnl Reveal: Wayback Endpoints for ${url}\nError: ${error}`,
+                        "error"
+                      );
+                    } else {
+                      logToDevtools(
+                        `Xnl Reveal: Wayback Endpoints for ${url}\nError: ${error}`,
+                        "error"
+                      );
+                    }
+                  } else if (statusCode !== 200) {
+                    // Handle non-200 status codes - don't mark as visited on error
+                    logToDevtools(
+                      `Xnl Reveal: Wayback Endpoints for ${url}\nError: Received HTTP ${statusCode} response from Wayback Machine`,
+                      "warn"
                     );
                   } else {
+                    // Success - mark this URL as visited
+                    const visitedMarker = {
+                      ["wayback://" + currentLocation]: true,
+                    };
+                    browser.storage.local.set(visitedMarker);
+                    
                     // Process the Wayback Machine data here
+                    // Limit to first 5000 lines
+                    const allLines = waybackData.split("\n");
+                    const MAX_LINES = 5000;
+                    let limitedData = waybackData;
+                    let truncatedMsg = "";
+                    
+                    if (allLines.length > MAX_LINES) {
+                      limitedData = allLines.slice(0, MAX_LINES).join("\n");
+                      truncatedMsg = `\n\n[Truncated: Showing first ${MAX_LINES} of ${allLines.length} endpoints]`;
+                    }
+                    
                     if (waybackRegex != "") {
-                      // Process only lines that end with ".js" (excluding lines that end with "?", "#", or whitespace)
-                      const jsLines = waybackData
+                      // Process only lines that match the regex
+                      const jsLines = limitedData
                         .split("\n")
                         .filter((line) =>
                           new RegExp(waybackRegex, "i").test(line.trim())
                         );
                       // Process the response if not blank
                       if (jsLines.join("\n").trim() != "") {
-                        console.log(jsLines.join("\n").trim());
+                        logToDevtools(
+                          `Xnl Reveal: Wayback Endpoints for ${url}\n${jsLines.join("\n").trim()}${truncatedMsg}`,
+                          "wayback"
+                        );
+                      } else {
+                        logToDevtools(
+                          `Xnl Reveal: Wayback Endpoints for ${url}\nNo endpoints found matching regex: ${waybackRegex}`,
+                          "wayback"
+                        );
                       }
                     } else {
-                      if (waybackData.trim() != "") {
-                        console.log(waybackData.trim());
+                      if (limitedData.trim() != "") {
+                        logToDevtools(
+                          `Xnl Reveal: Wayback Endpoints for ${url}\n${limitedData.trim()}${truncatedMsg}`,
+                          "wayback"
+                        );
+                      } else {
+                        logToDevtools(
+                          `Xnl Reveal: Wayback Endpoints for ${url}\nNo endpoints found`,
+                          "wayback"
+                        );
                       }
                     }
                   }
                 }
               );
-              // Mark this URL as visited
-              const waybackData = {
-                ["wayback://" + currentLocation]: true,
-              };
-              browser.storage.local.set(waybackData);
             } else {
-              console.log(
+              logToDevtools(
                 `Xnl Reveal: Location ${currentLocation} already checked on wayback archive.`
               );
             }
@@ -825,7 +920,12 @@ browser.storage.sync.get(
     function replaceParameterValues(url, replacement) {
       const urlObject = new URL(url);
       const params = urlObject.searchParams;
-      for (const key of params.keys()) {
+      // Firefox-compatible way to iterate over URLSearchParams
+      const keys = [];
+      params.forEach((value, key) => {
+        keys.push(key);
+      });
+      for (const key of keys) {
         params.set(key, replacement);
       }
       return urlObject.toString();
@@ -900,8 +1000,8 @@ browser.storage.sync.get(
         sus: susParams,
       });
 
-      // Write the info to the console too
-      console.log(reflectionConsoleMsg);
+      // Write the info to the devtools panel
+      logToDevtools(reflectionConsoleMsg);
 
       // Copy the info to the clipboard if required
       if (copyToClipboard) {
@@ -982,7 +1082,8 @@ browser.storage.sync.get(
                           );
 
                           document.body.appendChild(statusBar);
-                          console.log(`Xnl Reveal: Fetching ${modifiedURL}`);
+                          // Don't log fetching messages
+                          // logToDevtools(`Xnl Reveal: Fetching ${modifiedURL}`);
 
                           Promise.race([fetch(modifiedURL), timeoutPromise])
                             .then((response) => {
@@ -1094,184 +1195,6 @@ browser.storage.sync.get(
       }
     }
 
-    /*
-    function runAfterPageLoad() {
-      try {
-        // Send a message to the background script to request tab information
-        browser.runtime.sendMessage({ action: "getTabInfo" });
-
-        // Check if the extension is enabled and an option is selected
-        if (
-          extensionDisabled === "false" &&
-          (hiddenDisabled === "false" ||
-            disabledDisabled === "false" ||
-            reflectionsDisabled === "false" ||
-            waybackDisabled === "false")
-        ) {
-          // Call isHostInScope with a callback to handle the result
-          isHostInScope((inScope) => {
-            if (inScope) {
-              // Write wayback endpoints to console if the option is checked
-              if (waybackDisabled === "false") {
-                writeWaybackEndpoints();
-              }
-              // Show hidden fields if the option is checked
-              if (hiddenDisabled === "false") {
-                showHiddenElements();
-              }
-              // Enable disabled fields if the option is checked
-              if (disabledDisabled === "false") {
-                enableDisabledElements();
-              }
-              // Process reflections if enabled
-              if (reflectionsDisabled === "false") {
-                const params = new URLSearchParams(window.location.search);
-                const reflectedParameters = [];
-
-                // Initialize a counter to keep track of successful requests
-                let successfulRequests = 0;
-
-                params.forEach((value, key) => {
-                  // Check if the parameter name is in the blacklist. If it is then skip it
-                  const blacklistArray = paramBlacklist
-                    .split(",")
-                    .map((param) => param.trim()); // Trim each parameter
-                  if (
-                    (blacklistArray.length === 1 &&
-                      blacklistArray[0] === key) ||
-                    blacklistArray.includes(key)
-                  ) {
-                    // Increment the successful requests counter
-                    successfulRequests++;
-                    return;
-                  }
-
-                  // Create a modified URL by replacing the current parameter's value
-                  const modifiedParams = new URLSearchParams(params);
-                  modifiedParams.set(key, canaryToken);
-                  const modifiedURL = `${window.location.origin}${window.location.pathname}?${modifiedParams}`;
-
-                  // Create a modified URL with parameter values replaced with the canary token for storage. This will ensure the same url with different parameter values does not cause the alert to be fired again
-                  const modifiedURLForStorage = replaceParameterValues(
-                    window.location.href,
-                    canaryToken
-                  );
-
-                  // Check if this URL and parameter have already triggered an alert
-                  browser.storage.local.get(
-                    [modifiedURLForStorage, key],
-                    ({
-                      [modifiedURLForStorage]: urlData,
-                      [key]: paramData,
-                    }) => {
-                      if (!urlData || !paramData) {
-                        // Initialize a timeout promise
-                        const timeoutPromise = new Promise(
-                          (resolve, reject) => {
-                            const timeoutError = new Error(
-                              `Xnl Reveal: Fetch timed out checking param "${key}" for URL: ${modifiedURL}`
-                            );
-                            setTimeout(() => {
-                              reject(timeoutError);
-                            }, 30000); // 30 seconds
-                          }
-                        );
-
-                        document.body.appendChild(statusBar);
-
-                        console.log(`Xnl Reveal: Fetching ${modifiedURL}`);
-                        // Perform the fetch for this specific parameter
-                        Promise.race([fetch(modifiedURL), timeoutPromise])
-                          .then((response) => {
-                            if (response instanceof Error) {
-                              console.error(
-                                "Xnl Reveal: Fetch error:",
-                                response
-                              ); // Handle fetch errors here
-                            } else {
-                              // Declare and initialize the contentType variable
-                              let contentType =
-                                response.headers.get("content-type") ||
-                                "text/html";
-
-                              // Check if it is a HTML response, and whether the charset is set in the headers or in a meta tag
-                              if (
-                                contentType.includes("text/html") &&
-                                !contentType.includes("charset=")
-                              ) {
-                                return response.text().then((text) => {
-                                  if (
-                                    !text.includes("<meta charset=") &&
-                                    !text.includes("text/html; charset=")
-                                  ) {
-                                    charsetXSS = true;
-                                  } else {
-                                    charsetXSS = false;
-                                  }
-                                  return text;
-                                });
-                              } else {
-                                charsetXSS = false;
-                                return response.text();
-                              }
-                            }
-                          })
-                          .then((text) => {
-                            // Check if the random string is reflected in the response
-                            if (text.includes(canaryToken)) {
-                              reflectedParameters.push(key);
-                            }
-                            // Mark this URL and parameter as alerted
-                            const alertData = {
-                              [modifiedURLForStorage]: true,
-                              [key]: true,
-                            };
-                            browser.storage.local.set(alertData);
-
-                            // Increment the successful requests counter
-                            successfulRequests++;
-
-                            // Check if we have processed all parameters and found reflections
-                            if (successfulRequests === params.size) {
-                              if (reflectedParameters.length > 0) {
-                                processReflectedParameters(
-                                  reflectedParameters,
-                                  charsetXSS
-                                );
-                              }
-                              // Remove the status bar once all requests are processed
-                              statusBar.remove();
-                            }
-                          })
-                          .catch((error) => {
-                            console.error("Xnl Reveal: Fetch error:", error); // Handle fetch errors here
-
-                            // Increment the successful requests counter even for failed requests
-                            successfulRequests++;
-
-                            // Check if we have processed all parameters
-                            if (successfulRequests === params.size) {
-                              statusBar.remove(); // Remove the status bar once all requests are processed
-                            }
-                          });
-                      }
-                    }
-                  );
-                });
-              }
-            }
-          });
-        }
-      } catch (error) {
-        // Handle other errors here
-        console.error("Xnl Reveal: An error occurred:", error);
-
-        // Remove the status bar if an error occurs
-        statusBar.remove();
-      }
-    }
-    */
-
     // Use the window.onload event to trigger your code after the page has loaded.
     if (window.onload) {
       const existingOnLoad = window.onload;
@@ -1294,6 +1217,44 @@ browser.storage.sync.get(
       // Send a message to the background script to remove the scope menu
       browser.runtime.sendMessage({ action: "removeScopeMenu" });
     }
+
+    // Listen for URL changes (for SPAs that use client-side routing)
+    let lastUrl = location.href;
+    let urlChangeTimeout;
+    let initialLoadComplete = false;
+    
+    // Mark initial load as complete after a short delay
+    setTimeout(() => {
+      initialLoadComplete = true;
+    }, 2000);
+    
+    new MutationObserver(() => {
+      const url = location.href;
+      if (url !== lastUrl) {
+        lastUrl = url;
+        console.log("XnlReveal: URL changed to", url);
+        
+        // Don't trigger on initial load - runAfterPageLoad will handle it
+        if (!initialLoadComplete) {
+          console.log("XnlReveal: Skipping URL change handler - initial load not complete");
+          return;
+        }
+        
+        // Debounce: Clear previous timeout and set a new one
+        clearTimeout(urlChangeTimeout);
+        urlChangeTimeout = setTimeout(() => {
+          // Only trigger wayback check on URL change, not full runAfterPageLoad
+          if (waybackDisabled === "false") {
+            isHostInScope((inScope) => {
+              if (inScope) {
+                console.log("XnlReveal: Calling writeWaybackEndpoints for new URL");
+                writeWaybackEndpoints();
+              }
+            });
+          }
+        }, 500); // Wait 500ms after URL stops changing
+      }
+    }).observe(document, { subtree: true, childList: true });
 
     // Check if the extension is enabled and an option is selected. This will run again after the delay to catch dynamic content
     try {

@@ -1,3 +1,23 @@
+// Helper function to log to devtools panel
+function logToDevtools(message, type = "info") {
+  // Send message to background script (which will handle storage and forwarding)
+  chrome.runtime.sendMessage(
+    {
+      action: "logToDevtools",
+      message: message,
+      logType: type,
+    },
+    (response) => {
+      if (chrome.runtime.lastError) {
+        console.error(
+          "Error sending to devtools:",
+          chrome.runtime.lastError.message
+        );
+      }
+    }
+  );
+}
+
 // Create a status bar element
 const statusBar = document.createElement("div");
 statusBar.textContent =
@@ -26,7 +46,7 @@ const BLACKLIST = new Set([
   "en.fofa.info",
 ]);
 
-// Sus Parameters from @jhaddix and @G0LDEN_infosec
+// Sus Parameters from @jhaddix, @G0LDEN_infosec and @ryancbarnett
 const SUS_CMDI = new Set([
   "execute",
   "dir",
@@ -37,6 +57,20 @@ const SUS_CMDI = new Set([
   "download",
   "ip",
   "upload",
+  "message",
+  "input_file",
+  "format",
+  "expression",
+  "data",
+  "bsh",
+  "bash",
+  "shell",
+  "command",
+  "range",
+  "sort",
+  "host",
+  "exec",
+  "code",
 ]);
 const SUS_DEBUG = new Set([
   "test",
@@ -65,6 +99,7 @@ const SUS_DEBUG = new Set([
   "rename",
   "debug",
   "modify",
+  "stacktrace",
 ]);
 const SUS_FILEINC = new Set([
   "root",
@@ -91,6 +126,12 @@ const SUS_FILEINC = new Set([
   "api",
   "app",
   "resource-type",
+  "controller",
+  "filename",
+  "page",
+  "f",
+  "view",
+  "input_file",
 ]);
 const SUS_IDOR = new Set([
   "count",
@@ -172,8 +213,14 @@ const SUS_SQLI = new Set([
   "phone_number",
   "delete",
   "report",
+  "q",
+  "sql",
 ]);
 const SUS_SSRF = new Set([
+  "sector_identifier_uri",
+  "request_uris",
+  "logo_uri",
+  "jwks_uri",
   "start",
   "path",
   "domain",
@@ -212,6 +259,8 @@ const SUS_SSRF = new Set([
   "data",
   "ip",
   "redirect",
+  "target",
+  "referer",
 ]);
 const SUS_SSTI = new Set([
   "preview",
@@ -302,6 +351,16 @@ const SUS_XSS = new Set([
   "c",
   "shop",
   "redirect",
+  "page",
+  "prefv1",
+  "destination",
+  "mode",
+  "data",
+  "error",
+  "editor",
+  "wysiwyg",
+  "widget",
+  "msg",
 ]);
 
 // Additional Sus Parameters
@@ -377,7 +436,7 @@ function dynamicScopeMenuItem(action, host) {
       if (chrome.runtime.lastError) {
         console.error("Error saving scopeItems:", chrome.runtime.lastError);
       } else {
-        console.log(
+        logToDevtools(
           `Xnl Reveal: Scope - successfully ${
             action === "Add" ? "added" : "removed"
           } ${host}.`
@@ -395,7 +454,8 @@ function showWaybackEndpoints() {
     var currentURL = encodeURIComponent(
       window.location.hostname.replace(/^www\./, "")
     );
-    console.log(`Xnl Reveal: Wayback location ${currentURL}`);
+    // Don't log when opening Wayback in new tab
+    // logToDevtools(`Xnl Reveal: Wayback location ${currentURL}`);
     var newURL =
       "https://web.archive.org/cdx/search/cdx?url=*." +
       currentURL +
@@ -765,44 +825,92 @@ chrome.storage.sync.get(
                 (response) => {
                   if (chrome.runtime.lastError) {
                     // Handle any error that may occur when sending the message
-                    console.error(chrome.runtime.lastError);
+                    console.error("Error sending wayback message:", chrome.runtime.lastError.message);
                     return;
                   }
-                  const { waybackData, error } = response;
+                  
+                  // Check if response is valid
+                  if (!response) {
+                    console.error("No response received for wayback data");
+                    return;
+                  }
+                  
+                  const { waybackData, error, statusCode, url, timeout } = response;
                   if (error) {
-                    // Handle the error if there's one
-                    console.log(
-                      "Xnl Reveal: Error fetching Wayback Machine data:",
-                      error
+                    // Handle the error if there's one - don't mark as visited on error
+                    if (timeout) {
+                      logToDevtools(
+                        `Xnl Reveal: Wayback Endpoints for ${url}\nError: ${error}`,
+                        "error"
+                      );
+                    } else {
+                      logToDevtools(
+                        `Xnl Reveal: Wayback Endpoints for ${url}\nError: ${error}`,
+                        "error"
+                      );
+                    }
+                  } else if (statusCode !== 200) {
+                    // Handle non-200 status codes - don't mark as visited on error
+                    logToDevtools(
+                      `Xnl Reveal: Wayback Endpoints for ${url}\nError: Received HTTP ${statusCode} response from Wayback Machine`,
+                      "warn"
                     );
                   } else {
+                    // Success - mark this URL as visited
+                    const visitedMarker = {
+                      ["wayback://" + currentLocation]: true,
+                    };
+                    chrome.storage.local.set(visitedMarker);
+                    
                     // Process the Wayback Machine data here
+                    // Limit to first 5000 lines
+                    const allLines = waybackData.split("\n");
+                    const MAX_LINES = 5000;
+                    let limitedData = waybackData;
+                    let truncatedMsg = "";
+                    
+                    if (allLines.length > MAX_LINES) {
+                      limitedData = allLines.slice(0, MAX_LINES).join("\n");
+                      truncatedMsg = `\n\n[Truncated: Showing first ${MAX_LINES} of ${allLines.length} endpoints]`;
+                    }
+                    
                     if (waybackRegex != "") {
-                      // Process only lines that end with ".js" (excluding lines that end with "?", "#", or whitespace)
-                      const jsLines = waybackData
+                      // Process only lines that match the regex
+                      const jsLines = limitedData
                         .split("\n")
                         .filter((line) =>
                           new RegExp(waybackRegex, "i").test(line.trim())
                         );
                       // Process the response if not blank
                       if (jsLines.join("\n").trim() != "") {
-                        console.log(jsLines.join("\n").trim());
+                        logToDevtools(
+                          `Xnl Reveal: Wayback Endpoints for ${url}\n${jsLines.join("\n").trim()}${truncatedMsg}`,
+                          "wayback"
+                        );
+                      } else {
+                        logToDevtools(
+                          `Xnl Reveal: Wayback Endpoints for ${url}\nNo endpoints found matching regex: ${waybackRegex}`,
+                          "wayback"
+                        );
                       }
                     } else {
-                      if (waybackData.trim() != "") {
-                        console.log(waybackData.trim());
+                      if (limitedData.trim() != "") {
+                        logToDevtools(
+                          `Xnl Reveal: Wayback Endpoints for ${url}\n${limitedData.trim()}${truncatedMsg}`,
+                          "wayback"
+                        );
+                      } else {
+                        logToDevtools(
+                          `Xnl Reveal: Wayback Endpoints for ${url}\nNo endpoints found`,
+                          "wayback"
+                        );
                       }
                     }
                   }
                 }
               );
-              // Mark this URL as visited
-              const waybackData = {
-                ["wayback://" + currentLocation]: true,
-              };
-              chrome.storage.local.set(waybackData);
             } else {
-              console.log(
+              logToDevtools(
                 `Xnl Reveal: Location ${currentLocation} already checked on wayback archive.`
               );
             }
@@ -963,7 +1071,8 @@ chrome.storage.sync.get(
                           );
 
                           document.body.appendChild(statusBar);
-                          console.log(`Xnl Reveal: Fetching ${modifiedURL}`);
+                          // Don't log fetching messages
+                          // logToDevtools(`Xnl Reveal: Fetching ${modifiedURL}`);
 
                           Promise.race([fetch(modifiedURL), timeoutPromise])
                             .then((response) => {
@@ -1132,8 +1241,8 @@ chrome.storage.sync.get(
         sus: susParams,
       });
 
-      // Write the info to the console too
-      console.log(reflectionConsoleMsg);
+      // Write the info to the devtools panel
+      logToDevtools(reflectionConsoleMsg);
 
       // Copy the info to the clipboard if required
       if (copyToClipboard) {
@@ -1170,6 +1279,44 @@ chrome.storage.sync.get(
       // Send a message to the background script to remove the scope menu
       chrome.runtime.sendMessage({ action: "removeScopeMenu" });
     }
+
+    // Listen for URL changes (for SPAs that use client-side routing)
+    let lastUrl = location.href;
+    let urlChangeTimeout;
+    let initialLoadComplete = false;
+    
+    // Mark initial load as complete after a short delay
+    setTimeout(() => {
+      initialLoadComplete = true;
+    }, 2000);
+    
+    new MutationObserver(() => {
+      const url = location.href;
+      if (url !== lastUrl) {
+        lastUrl = url;
+        console.log("XnlReveal: URL changed to", url);
+        
+        // Don't trigger on initial load - runAfterPageLoad will handle it
+        if (!initialLoadComplete) {
+          console.log("XnlReveal: Skipping URL change handler - initial load not complete");
+          return;
+        }
+        
+        // Debounce: Clear previous timeout and set a new one
+        clearTimeout(urlChangeTimeout);
+        urlChangeTimeout = setTimeout(() => {
+          // Only trigger wayback check on URL change, not full runAfterPageLoad
+          if (waybackDisabled === "false") {
+            isHostInScope((inScope) => {
+              if (inScope) {
+                console.log("XnlReveal: Calling writeWaybackEndpoints for new URL");
+                writeWaybackEndpoints();
+              }
+            });
+          }
+        }, 500); // Wait 500ms after URL stops changing
+      }
+    }).observe(document, { subtree: true, childList: true });
 
     // Check if the extension is enabled and an option is selected. This will run again after the delay to catch dynamic content
     try {

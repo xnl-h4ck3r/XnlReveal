@@ -764,6 +764,8 @@ input:not([type="radio"]) {
 select {
     margin-block: 1rem;
     border-radius: 0.3em;
+    height: 150px;
+    overflow-y: auto;
 }
 
 .radiogroup {

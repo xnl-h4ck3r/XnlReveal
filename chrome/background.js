@@ -2,6 +2,9 @@ const chromeTabs = chrome.tabs;
 const checkIntervalMinutes = 10;
 const alarmName = "checkWaybackStatus";
 
+// Store devtools panel connections by tab ID
+const devtoolsPanels = {};
+
 // Function to update the extension icon based on the response status
 function updateIcon(responseStatus) {
   if (responseStatus === 200) {
@@ -162,6 +165,32 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     // Remove the existing scope context menu item
     removeContextMenu();
   }
+  if (request.action === "logToDevtools") {
+    // Forward the message to the devtools panel
+    const tabId = sender.tab ? sender.tab.id : request.tabId;
+    const timestamp = Date.now();
+    console.log("Background received logToDevtools for tab:", tabId, "Message:", request.message);
+    
+    // Try to send to panel via port connection first
+    const sentViaPort = sendToDevtools(tabId, request.logType || "info", request.message, timestamp);
+    
+    // Always write to storage for persistence across sessions
+    chrome.storage.local.get(['xnlreveal_all_messages'], (result) => {
+      const messages = result['xnlreveal_all_messages'] || [];
+      messages.push({ 
+        type: request.logType || "info", 
+        text: request.message, 
+        timestamp: timestamp 
+      });
+      // Keep only last 1000 messages
+      if (messages.length > 1000) {
+        messages.shift();
+      }
+      chrome.storage.local.set({ 'xnlreveal_all_messages': messages });
+    });
+    
+    return true;
+  }
   if (request.action === "getTabInfo") {
     chrome.action.setBadgeText({ text: "" }); // Reset the badge on the icon
 
@@ -199,18 +228,23 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   if (request.action === "fetchWaybackData") {
     const currentURL = request.location; // Get the current URL from the content script
 
-    // Construct the URL for fetching Wayback Machine data
-    const newURL = `https://web.archive.org/cdx/search/cdx?url=${currentURL}*&fl=original&collapse=urlkey&filter=!mimetype:warc/revisit|text/css|image/jpeg|image/jpg|image/png|image/svg.xml|image/gif|image/tiff|image/webp|image/bmp|image/vnd|image/x-icon|image/vnd.microsoft.icon|font/ttf|font/woff|font/woff2|font/x-woff2|font/x-woff|font/otf|audio/mpeg|audio/wav|audio/webm|audio/aac|audio/ogg|audio/wav|audio/webm|video/mp4|video/mpeg|video/webm|video/ogg|video/mp2t|video/webm|video/x-msvideo|video/x-flv|application/font-woff|application/font-woff2|application/x-font-woff|application/x-font-woff2|application/vnd.ms-fontobject|application/font-sfnt|application/vnd.android.package-archive|binary/octet-stream|application/octet-stream|application/pdf|application/x-font-ttf|application/x-font-otf|video/webm|video/3gpp|application/font-ttf|audio/mp3|audio/x-wav|image/pjpeg|audio/basic|application/font-otf&filter=!statuscode:404|301|302`;
+    // Construct the URL for fetching Wayback Machine data with limit of 1000 results
+    const newURL = `https://web.archive.org/cdx/search/cdx?url=${currentURL}*&fl=original&collapse=urlkey&limit=1000&filter=!mimetype:warc/revisit|text/css|image/jpeg|image/jpg|image/png|image/svg.xml|image/gif|image/tiff|image/webp|image/bmp|image/vnd|image/x-icon|image/vnd.microsoft.icon|font/ttf|font/woff|font/woff2|font/x-woff2|font/x-woff|font/otf|audio/mpeg|audio/wav|audio/webm|audio/aac|audio/ogg|audio/wav|audio/webm|video/mp4|video/mpeg|video/webm|video/ogg|video/mp2t|video/webm|video/x-msvideo|video/x-flv|application/font-woff|application/font-woff2|application/x-font-woff|application/x-font-woff2|application/vnd.ms-fontobject|application/font-sfnt|application/vnd.android.package-archive|binary/octet-stream|application/octet-stream|application/pdf|application/x-font-ttf|application/x-font-otf|video/webm|video/3gpp|application/font-ttf|audio/mp3|audio/x-wav|image/pjpeg|audio/basic|application/font-otf&filter=!statuscode:404|301|302`;
+
+    // Create abort controller for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
 
     // Make the cross-origin request from the background script
-    fetch(newURL)
+    fetch(newURL, { signal: controller.signal })
       .then((response) => {
+        clearTimeout(timeoutId);
         const statusCode = response.status; // Get the HTTP status code
 
         // Process the Wayback data here
         return response.text().then((data) => {
           updateIcon(statusCode); // Call updateIcon with the status code
-          return { waybackData: data };
+          return { waybackData: data, statusCode: statusCode, url: currentURL };
         });
       })
       .then((result) => {
@@ -218,8 +252,13 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         sendResponse(result);
       })
       .catch((error) => {
-        // Handle any errors
-        sendResponse({ error: error.message });
+        clearTimeout(timeoutId);
+        // Check if it was a timeout error
+        if (error.name === 'AbortError') {
+          sendResponse({ error: 'Request timeout after 60 seconds', timeout: true, url: currentURL });
+        } else {
+          sendResponse({ error: error.message, url: currentURL });
+        }
       });
 
     // Return true to indicate that we will use sendResponse asynchronously
@@ -236,9 +275,48 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     } else {
       chrome.action.setBadgeBackgroundColor({ color: "green" });
     }
+    return false; // Don't expect async response
   }
-  return true;
 });
+
+// Handle devtools panel connections
+chrome.runtime.onConnect.addListener(function (port) {
+  console.log("Port connected:", port.name);
+  if (port.name === "devtools-page") {
+    let tabId;
+
+    // Listen for messages from the devtools panel
+    port.onMessage.addListener(function (message) {
+      console.log("Message from devtools:", message);
+      if (message.name === "panel-ready") {
+        tabId = message.tabId;
+        devtoolsPanels[tabId] = port;
+        console.log("Panel registered for tab:", tabId, "Total panels:", Object.keys(devtoolsPanels).length);
+      }
+    });
+
+    // Clean up when the panel disconnects
+    port.onDisconnect.addListener(function () {
+      console.log("Panel disconnected for tab:", tabId);
+      if (tabId) {
+        delete devtoolsPanels[tabId];
+      }
+    });
+  }
+});
+
+// Function to send message to devtools panel
+function sendToDevtools(tabId, type, text, timestamp) {
+  console.log("sendToDevtools called for tab:", tabId, "Panels:", Object.keys(devtoolsPanels));
+  if (devtoolsPanels[tabId]) {
+    console.log("Sending to panel:", type, text);
+    devtoolsPanels[tabId].postMessage({ type: type, text: text, timestamp: timestamp });
+    return true; // Successfully sent via port
+  } else {
+    console.log("No panel found for tab:", tabId);
+    return false; // No port connection
+  }
+}
 
 chrome.runtime.onInstalled.addListener(() => {
   // Set defaults on installation

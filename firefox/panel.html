@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>XnlReveal Panel</title>
+  <link rel="stylesheet" type="text/css" href="xnl.css">
+  <style>
+    body {
+      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+      background-color: #1e1e1e;
+      color: #d4d4d4;
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      user-select: text;
+      -webkit-user-select: text;
+      -moz-user-select: text;
+    }
+    h1 {
+      background-color: #2d2d30;
+      color: #cccccc;
+      margin: 0;
+      padding: 10px 15px;
+      font-size: 16px;
+      font-weight: normal;
+      border-bottom: 1px solid #3e3e42;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      user-select: none;
+      -moz-user-select: none;
+    }
+    h1 span {
+      display: flex;
+      align-items: center;
+    }
+    h1 img {
+      width: 24px;
+      height: 24px;
+      margin-right: 10px;
+    }
+    h1 .coffee-link {
+      color: #4ec9b0;
+      text-decoration: none;
+      font-size: 13px;
+      transition: color 0.2s;
+      white-space: nowrap;
+    }
+    h1 .coffee-link:hover {
+      color: #6abd6a;
+    }
+    h1 img {
+      width: 24px;
+      height: 24px;
+      margin-right: 10px;
+    }
+    #controls {
+      background-color: #252526;
+      padding: 8px 15px;
+      border-bottom: 1px solid #3e3e42;
+      display: flex;
+      gap: 10px;
+      user-select: none;
+      -moz-user-select: none;
+    }
+    #controls button {
+      background-color: #0e639c;
+      color: #ffffff;
+      border: none;
+      padding: 5px 12px;
+      cursor: pointer;
+      font-size: 12px;
+      border-radius: 2px;
+    }
+    #controls button:hover {
+      background-color: #1177bb;
+    }
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px 15px;
+      user-select: text;
+      -webkit-user-select: text;
+      -moz-user-select: text;
+    }
+    .message {
+      margin-bottom: 8px;
+      padding: 6px 8px;
+      border-left: 3px solid #3e3e42;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      font-size: 12px;
+      line-height: 1.5;
+      background-color: #252526;
+      color: #d4d4d4;
+      user-select: text;
+      -webkit-user-select: text;
+      -moz-user-select: text;
+      cursor: text;
+    }
+    .message.error {
+      border-left-color: #f48771;
+      background-color: #5a1d1d;
+      color: #f48771;
+    }
+    .message.warn {
+      border-left-color: #cca700;
+      background-color: #4d4a2a;
+      color: #dcdcaa;
+    }
+    .message.info {
+      border-left-color: #4ec9b0;
+      color: #d4d4d4;
+    }
+    .message.wayback {
+      border-left-color: #6abd6a;
+      color: #d4d4d4;
+    }
+    .timestamp {
+      color: #858585;
+      font-size: 11px;
+      margin-right: 8px;
+      user-select: text;
+      -moz-user-select: text;
+    }
+    .message span {
+      user-select: text;
+      -webkit-user-select: text;
+      -moz-user-select: text;
+    }
+    #messages::-webkit-scrollbar {
+      width: 10px;
+    }
+    #messages::-webkit-scrollbar-track {
+      background: #1e1e1e;
+    }
+    #messages::-webkit-scrollbar-thumb {
+      background: #424242;
+    }
+    #messages::-webkit-scrollbar-thumb:hover {
+      background: #4e4e4e;
+    }
+  </style>
+</head>
+<body>
+  <h1>
+    <span>
+      <img src="images/icon16.png" alt="XnlReveal">XnlReveal Messages
+    </span>
+    <a href="https://ko-fi.com/xnlh4ck3r" target="_blank" class="coffee-link">Want to buy me a coffee? ☕</a>
+  </h1>
+  <div id="controls">
+    <button id="copyAllBtn">Copy All Messages</button>
+    <button id="clearBtn">Clear Messages and Cache</button>
+  </div>
+  <div id="messages"></div>
+  <script src="panel.js"></script>
+</body>
+</html>

@@ -1,5 +1,20 @@
 ## Changelog
 
+- v4.0
+
+  - New
+
+    - Add an XnlReveal tab in dev tools. This will show messages (most recent at the top) instead of writing them to the browser console. Up to 1000 messages will be persisted in local storage so will be available across browser sessions.
+    - The parameter reflection details and wayback endpoints will be written to the Dev Tools tab instead of the console.
+    - There will be a 60 second timeout for getting endpoints from wayback machine. If the timeout is reached, a suitable message will be written to the DevTools tab.
+    - When getting wayback endpoints, it only get up to 1000 endpoints from for the endpoint. This is to prevent causing the browser to slow down and use too much memory and storage.
+    - Show a suitable message in Dev Tools tab if the Wayback call does not return a 200 response.
+
+  - Changed
+
+    - Modified the Sus Params data to include additional data gathered from Akamai WAF threat research team intel - thanks to @ryancbarnett
+    - Fix glitch on Options popup page when items were added or removed from the white/black list.
+
 - v3.10
 
   - Changed
