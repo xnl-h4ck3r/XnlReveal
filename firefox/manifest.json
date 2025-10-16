@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "Xnl Reveal",
   "description": "Show alerts for reflected query params; Show Wayback endpoints; Show hidden elements; Enable disabled elements. See https://github.com/xnl-h4ck3r/XnlReveal for more details.",
-  "version": "4.0",
+  "version": "4.1",
   "background": {
     "scripts": [
       "background.js"
@@ -43,9 +43,6 @@
     }
   ],
   "icons": {
-    "16": "images/iconnoway16.png",
-    "48": "images/iconnoway48.png",
-    "128": "images/iconnoway128.png",
     "16": "images/icon16.png",
     "48": "images/icon48.png",
     "128": "images/icon128.png"

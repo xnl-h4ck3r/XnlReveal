@@ -1,21 +1,20 @@
 // Helper function to log to devtools panel
 function logToDevtools(message, type = "info") {
   // Send message to background script (which will handle storage and forwarding)
-  browser.runtime
-    .sendMessage({
-      action: "logToDevtools",
-      message: message,
-      logType: type,
-    })
-    .catch((error) => {
-      console.error("Error sending to devtools:", error);
-    });
+  // No callback needed - we don't use the response and it causes "port closed" errors
+  browser.runtime.sendMessage({
+    action: "logToDevtools",
+    message: message,
+    logType: type,
+  });
 }
+
+// Define status message constant
+const REFLECTION_STATUS_MESSAGE = "Xnl Reveal is getting reflections. If there's a large number of params, this can take a while. Wait until this message disappears if you want the results.";
 
 // Create a status bar element
 const statusBar = document.createElement("div");
-statusBar.textContent =
-  "Xnl Reveal is getting reflections. If there are a large number of parameters, this can take a while. Wait until this message disappears if you want the results.";
+statusBar.textContent = REFLECTION_STATUS_MESSAGE;
 statusBar.style.backgroundColor = "red";
 statusBar.style.color = "white";
 statusBar.style.position = "fixed";
@@ -428,7 +427,7 @@ function dynamicScopeMenuItem(action, host) {
     // Save the updated scopeItems back to storage
     browser.storage.sync.set({ scopeItems }, () => {
       if (browser.runtime.lastError) {
-        console.error("Error saving scopeItems:", browser.runtime.lastError);
+        console.error("%c🤘Xnl Reveal:%c Error saving scopeItems:", "color: #00ff00; font-weight: bold", "color: inherit", browser.runtime.lastError);
       } else {
         logToDevtools(
           `Xnl Reveal: Scope - successfully ${
@@ -458,7 +457,7 @@ function showWaybackEndpoints() {
     // open the window
     var newWindow = window.open(newURL, "_blank");
   } catch (error) {
-    console.error("Xnl Reveal: Error in showWaybackEndpoints:", error);
+    console.error("%c🤘Xnl Reveal:%c Error in showWaybackEndpoints:", "color: #00ff00; font-weight: bold", "color: inherit", error);
   }
 }
 
@@ -472,7 +471,7 @@ function showGoogleCache() {
     // open the window
     var newWindow = window.open(newURL, "_blank");
   } catch (error) {
-    console.error("Xnl Reveal: Error in showGoogleCache:", error);
+    console.error("%c🤘Xnl Reveal:%c Error in showGoogleCache:", "color: #00ff00; font-weight: bold", "color: inherit", error);
   }
 }
 
@@ -501,24 +500,25 @@ function showFofaSearch() {
     // open the window
     var newWindow = window.open(newURL, "_blank");
   } catch (error) {
-    console.error("Xnl Reveal: Error in showFofaSearch:", error);
+    console.error("%c🤘Xnl Reveal:%c Error in showFofaSearch:", "color: #00ff00; font-weight: bold", "color: inherit", error);
   }
 }
 
+// Function to open a separate tab with a word list based on the current tab contents
 function createWordList() {
   try {
-    const runtime = typeof browser !== "undefined" ? browser : chrome;
-
     // Convert stop words string to a Set
     const stopWords = new Set(DEFAULT_STOP_WORDS.split(","));
 
     // Extract the words from the current page
     let words = document.documentElement.innerText.match(/[a-zA-Z_\-]+/g);
     words = words.map((word) => {
-      if (word.startsWith("-")) word = word.substring(1);
+      // Remove leading '-' from words
+      if (word.startsWith("-")) {
+        word = word.substring(1);
+      }
       return word;
     });
-
     const filteredWords = [...new Set(words)]
       .filter((word) => word.length > 1 && !stopWords.has(word.toLowerCase()))
       .sort();
@@ -529,18 +529,75 @@ function createWordList() {
         ? originalUrl.substring(0, 50) + "..."
         : originalUrl;
 
-    // Open the new tab and send data
-    const newTab = runtime.runtime.getURL("wordlist.html");
-    window.open(newTab);
+    // Get the URL of the CSS file and the image
+    const cssUrl = browser.runtime.getURL("xnl.css");
+    const imageUrl = browser.runtime.getURL("images/codemain.jpg");
 
-    runtime.runtime.sendMessage({
-      action: "showWordList",
-      url: originalUrl,
-      truncatedUrl: truncatedUrl,
-      wordList: wordListText,
-    });
+    // Create HTML content with the original URL, CSS link, and word list inside a textarea
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <title>Xnl Reveal: Word List</title>
+        <style>
+          @import url('${cssUrl}');
+          html, body {
+            height: 100%;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+          }
+          body {
+            background-image: url('${imageUrl}');
+          }
+          .body-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+          }
+          .popup-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+          }
+          .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+          }
+          .container textarea {
+            width: 100%;
+            height: 100%;
+            box-sizing: border-box; /* Ensures padding and border are included in the width */
+            flex: 1;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="body-wrapper">
+          <main class="popup-main">
+            <h1 class="options-heading">Xnl Reveal: Word List</h1>
+            <h2 title="${originalUrl}">Source: <a href="${originalUrl}" target="_blank">${truncatedUrl}</a></h2>
+            <div class="container options">
+              <textarea readonly>${wordListText}</textarea>
+            </div>
+          </main>
+        </div>
+      </body>
+      </html>
+    `;
+
+    // Open a new tab
+    const newTab = window.open();
+
+    // Write the HTML content into the new tab
+    newTab.document.open();
+    newTab.document.write(htmlContent);
+    newTab.document.close();
   } catch (error) {
-    console.error("Xnl Reveal: Error in createWordList:", error);
+    console.error("%c🤘Xnl Reveal:%c Error in createWordList:", "color: #00ff00; font-weight: bold", "color: inherit", error);
   }
 }
 
@@ -567,7 +624,7 @@ function enableDisabledElements() {
         }
       });
   } catch (error) {
-    console.error("Xnl Reveal: Error in enableDisabledElements:", error);
+    console.error("%c🤘Xnl Reveal:%c Error in enableDisabledElements:", "color: #00ff00; font-weight: bold", "color: inherit", error);
   }
 }
 
@@ -594,7 +651,7 @@ function showHiddenElements() {
         }
       });
   } catch (error) {
-    console.error("Xnl Reveal: Error in showHiddenElements (hidden):", error);
+    console.error("%c🤘Xnl Reveal:%c Error in showHiddenElements (hidden):", "color: #00ff00; font-weight: bold", "color: inherit", error);
   }
   try {
     document
@@ -617,7 +674,9 @@ function showHiddenElements() {
       });
   } catch (error) {
     console.error(
-      "Xnl Reveal: Error in showHiddenElements (display none):",
+      "%c🤘Xnl Reveal:%c Error in showHiddenElements (display none):",
+      "color: #00ff00; font-weight: bold",
+      "color: inherit",
       error
     );
   }
@@ -644,7 +703,9 @@ function showHiddenElements() {
       });
   } catch (error) {
     console.error(
-      "Xnl Reveal: Error in showHiddenElements (visibility hidden):",
+      "%c🤘Xnl Reveal:%c Error in showHiddenElements (visibility hidden):",
+      "color: #00ff00; font-weight: bold",
+      "color: inherit",
       error
     );
   }
@@ -742,29 +803,50 @@ browser.storage.sync.get(
 
     function writeWaybackEndpoints() {
       try {
-        // Get the current location without schema and query srting
+        // Get the current location without schema and query string
         currentLocation = location.host + location.pathname;
         if (!currentLocation.endsWith("/")) {
           currentLocation += "/";
         }
+        console.log("%c🤘Xnl Reveal:%c Checking Wayback for:", "color: #00ff00; font-weight: bold", "color: inherit", currentLocation);
         // Check if this URL has already been used to check wayback
         browser.storage.local.get(
           ["wayback://" + currentLocation],
           ({ ["wayback://" + currentLocation]: waybackPath }) => {
             if (!waybackPath) {
-              // Send a message to background.js to request Wayback Machine data
+              console.log("%c🤘Xnl Reveal:%c New location, fetching Wayback data for:", "color: #00ff00; font-weight: bold", "color: inherit", currentLocation);
+              
+              // Mark this location as being fetched immediately to prevent duplicate requests
+              const visitedMarker = {
+                ["wayback://" + currentLocation]: true,
+              };
+              browser.storage.local.set(visitedMarker);
+              
+              // Send request - background script handles queuing
+              const fetchingLocation = currentLocation;
+              
+              console.log("%c🤘Xnl Reveal:%c Sending fetchWaybackData to background for:", "color: #00ff00; font-weight: bold", "color: inherit", fetchingLocation);
+              
               browser.runtime.sendMessage(
                 {
                   action: "fetchWaybackData",
-                  location: currentLocation,
+                  location: fetchingLocation,
                 },
                 (response) => {
                   if (browser.runtime.lastError) {
-                    // Handle any error that may occur when sending the message
-                    console.error(browser.runtime.lastError);
+                    console.error("%c🤘Xnl Reveal:%c Error for", "color: #00ff00; font-weight: bold", "color: inherit", fetchingLocation, ":", browser.runtime.lastError.message);
                     return;
                   }
+                  
+                  if (!response) {
+                    console.error("%c🤘Xnl Reveal:%c No response for", "color: #00ff00; font-weight: bold", "color: inherit", fetchingLocation);
+                    return;
+                  }
+                  
+                  console.log("%c🤘Xnl Reveal:%c Received Wayback response for", "color: #00ff00; font-weight: bold", "color: inherit", fetchingLocation);
+                  
                   const { waybackData, error, statusCode, url, timeout } = response;
+                  
                   if (error) {
                     // Handle the error if there's one - don't mark as visited on error
                     if (timeout) {
@@ -785,27 +867,13 @@ browser.storage.sync.get(
                       "warn"
                     );
                   } else {
-                    // Success - mark this URL as visited
-                    const visitedMarker = {
-                      ["wayback://" + currentLocation]: true,
-                    };
-                    browser.storage.local.set(visitedMarker);
-                    
-                    // Process the Wayback Machine data here
-                    // Limit to first 5000 lines
+                    // Success - already marked as visited at the start of the request
+                    // Send all wayback data to DevTools (panel will handle truncation)
                     const allLines = waybackData.split("\n");
-                    const MAX_LINES = 5000;
-                    let limitedData = waybackData;
-                    let truncatedMsg = "";
-                    
-                    if (allLines.length > MAX_LINES) {
-                      limitedData = allLines.slice(0, MAX_LINES).join("\n");
-                      truncatedMsg = `\n\n[Truncated: Showing first ${MAX_LINES} of ${allLines.length} endpoints]`;
-                    }
                     
                     if (waybackRegex != "") {
                       // Process only lines that match the regex
-                      const jsLines = limitedData
+                      const jsLines = waybackData
                         .split("\n")
                         .filter((line) =>
                           new RegExp(waybackRegex, "i").test(line.trim())
@@ -813,7 +881,7 @@ browser.storage.sync.get(
                       // Process the response if not blank
                       if (jsLines.join("\n").trim() != "") {
                         logToDevtools(
-                          `Xnl Reveal: Wayback Endpoints for ${url}\n${jsLines.join("\n").trim()}${truncatedMsg}`,
+                          `Xnl Reveal: Wayback Endpoints for ${url}\n${jsLines.join("\n").trim()}`,
                           "wayback"
                         );
                       } else {
@@ -823,9 +891,9 @@ browser.storage.sync.get(
                         );
                       }
                     } else {
-                      if (limitedData.trim() != "") {
+                      if (waybackData.trim() != "") {
                         logToDevtools(
-                          `Xnl Reveal: Wayback Endpoints for ${url}\n${limitedData.trim()}${truncatedMsg}`,
+                          `Xnl Reveal: Wayback Endpoints for ${url}\n${waybackData.trim()}`,
                           "wayback"
                         );
                       } else {
@@ -839,81 +907,88 @@ browser.storage.sync.get(
                 }
               );
             } else {
-              logToDevtools(
-                `Xnl Reveal: Location ${currentLocation} already checked on wayback archive.`
+              console.log(
+                "%c🤘Xnl Reveal:%c Location " + currentLocation + " already checked on wayback archive.",
+                "color: #00ff00; font-weight: bold",
+                "color: inherit"
               );
             }
           }
         );
       } catch (error) {
         // Handle other errors here
-        console.error("Xnl Reveal: An error occurred:", error);
+        console.error("%c🤘Xnl Reveal:%c An error occurred:", "color: #00ff00; font-weight: bold", "color: inherit", error);
       }
     }
 
     function isHostInScope(callback) {
       // Send a message to the background script to request tab information
-      browser.runtime.sendMessage(
-        { action: "getTabInfo" },
-        function (response) {
-          if (response.error) {
-            console.error(
-              "An error occurred while querying tabs:",
-              response.error
-            );
-            callback(false); // Return false when there's an error
-            return;
-          }
-
-          const currentHost = response.currentHost;
-
-          // Ignore blacklisted websites
-          if (BLACKLIST.has(location.host)) {
-            callback(false);
-            return;
-          }
-
-          try {
-            // Get the scope type from storage
-            browser.storage.sync.get(["scopeType"], (scopeResult) => {
-              const scopeType = scopeResult.scopeType || "whitelist"; // Default to "whitelist" if not set
-
-              // Get the scope items from storage
-              browser.storage.sync.get(["scopeItems"], (itemsResult) => {
-                const scopeItems = itemsResult.scopeItems || [];
-
-                // If scopeItems is empty, return true
-                if (scopeItems.length === 0) {
-                  callback(true);
-                  return;
-                }
-
-                // Check if any scope items match the current host
-                const isMatch = scopeItems.some((item) =>
-                  currentHost.includes(item)
-                );
-
-                // Determine the result based on scope type
-                let result;
-                if (scopeType === "whitelist") {
-                  result = isMatch;
-                } else if (scopeType === "blacklist") {
-                  result = !isMatch;
-                }
-
-                // Use the callback to handle the result
-                callback(result);
-              });
-            });
-          } catch (error) {
-            console.error(
-              "An error occurred while accessing Browser storage:",
-              error
-            );
-            callback(false); // Return false when there's an error
-          }
+      browser.runtime.sendMessage({ action: "getTabInfo" }, function (response) {
+        if (response.error) {
+          console.error(
+            "%c🤘Xnl Reveal:%c An error occurred while querying tabs:",
+            "color: #00ff00; font-weight: bold",
+            "color: inherit",
+            response.error
+          );
+          callback(false); // Return false when there's an error
+          return;
         }
-      );
+
+        const currentHost = response.currentHost;
+
+        // Ignore blacklisted websites
+        if (BLACKLIST.has(location.host)) {
+          callback(false);
+          return;
+        }
+
+        try {
+          // Get the scope type from storage
+          browser.storage.sync.get(["scopeType"], (scopeResult) => {
+            const scopeType = scopeResult.scopeType || "whitelist"; // Default to "whitelist" if not set
+
+            // Get the scope items from storage
+            browser.storage.sync.get(["scopeItems"], (itemsResult) => {
+              const scopeItems = itemsResult.scopeItems || [];
+
+              // If scopeItems is empty, behavior depends on scope type
+              if (scopeItems.length === 0) {
+                // Empty whitelist = process nothing, Empty blacklist = process everything
+                const result = scopeType === "blacklist";
+                if (!result && scopeType === "whitelist") {
+                  console.log("%c🤘Xnl Reveal:%c Whitelist is empty - not processing any sites. Add domains to the whitelist in Options, or switch to Blacklist mode.", "color: #00ff00; font-weight: bold", "color: inherit");
+                }
+                callback(result);
+                return;
+              }
+              // Check if any scope items match the current host
+              const isMatch = scopeItems.some((item) =>
+                currentHost.includes(item)
+              );
+
+              // Determine the result based on scope type
+              let result;
+              if (scopeType === "whitelist") {
+                result = isMatch;
+              } else if (scopeType === "blacklist") {
+                result = !isMatch;
+              }
+
+              // Use the callback to handle the result
+              callback(result);
+            });
+          });
+        } catch (error) {
+          console.error(
+            "%c🤘Xnl Reveal:%c An error occurred while accessing Chrome storage:",
+            "color: #00ff00; font-weight: bold",
+            "color: inherit",
+            error
+          );
+          callback(false); // Return false when there's an error
+        }
+      });
     }
 
     // Function to replace parameter values with replacement arg in the URL
@@ -938,9 +1013,205 @@ browser.storage.sync.get(
         .then(() => {})
         .catch((error) => {
           console.error(
-            `Xnl Reveal: Error copying to clipboard (${error}). Check that the site has permissions to access the clipboard in the browser`
+            `🤘Xnl Reveal: Error copying to clipboard (${error}). Check that the site has permissions to access the clipboard in the browser`
           );
         });
+    }
+
+    function runAfterPageLoad() {
+      try {
+        browser.runtime.sendMessage({ action: "getTabInfo" });
+
+        if (
+          extensionDisabled === "false" &&
+          (hiddenDisabled === "false" ||
+            disabledDisabled === "false" ||
+            reflectionsDisabled === "false" ||
+            waybackDisabled === "false")
+        ) {
+          isHostInScope((inScope) => {
+            if (inScope) {
+              if (waybackDisabled === "false") writeWaybackEndpoints();
+              if (hiddenDisabled === "false") showHiddenElements();
+              if (disabledDisabled === "false") enableDisabledElements();
+
+              if (reflectionsDisabled === "false") {
+                const params = new URLSearchParams(window.location.search);
+                const reflectedParameters = [];
+                let successfulRequests = 0;
+                let paramIndex = 0;
+                
+                // First, calculate the actual number of non-blacklisted params
+                const blacklistArray = paramBlacklist
+                  .split(",")
+                  .map((param) => param.trim());
+                let totalParams = 0;
+                params.forEach((value, key) => {
+                  if (
+                    !((blacklistArray.length === 1 && blacklistArray[0] === key) ||
+                    blacklistArray.includes(key))
+                  ) {
+                    totalParams++;
+                  }
+                });
+
+                params.forEach((value, key) => {
+                  let specialChars = "";
+                  if (
+                    (blacklistArray.length === 1 &&
+                      blacklistArray[0] === key) ||
+                    blacklistArray.includes(key)
+                  ) {
+                    return; // Skip blacklisted params
+                  }
+                  
+                  paramIndex++; // Increment only for non-blacklisted params
+                  const currentParamNumber = paramIndex; // Capture the index for this specific param
+
+                  const performFetch = (withSpecialChars) => {
+                    const modifiedParams = new URLSearchParams(params);
+                    if (withSpecialChars && checkSpecialChars) {
+                      modifiedParams.set(key, canaryToken + `"'<xnl`);
+                    } else {
+                      modifiedParams.set(key, canaryToken);
+                    }
+                    const modifiedURL = `${window.location.origin}${window.location.pathname}?${modifiedParams}`;
+                    const modifiedURLForStorage = replaceParameterValues(
+                      window.location.href,
+                      canaryToken
+                    );
+
+                    browser.storage.local.get(
+                      [modifiedURLForStorage, key],
+                      ({
+                        [modifiedURLForStorage]: urlData,
+                        [key]: paramData,
+                      }) => {
+                        if (!urlData || !paramData) {
+                          statusBar.textContent = REFLECTION_STATUS_MESSAGE;
+                          document.body.appendChild(statusBar);
+                          
+                          const timeoutPromise = new Promise(
+                            (resolve, reject) => {
+                              const timeoutError = new Error(
+                                `Xnl Reveal: Fetch timed out checking param "${key}" for URL: ${modifiedURL}`
+                              );
+                              setTimeout(() => reject(timeoutError), 30000);
+                            }
+                          );
+                          // Don't log fetching messages
+                          // logToDevtools(`Xnl Reveal: Fetching ${modifiedURL}`);
+
+                          Promise.race([fetch(modifiedURL), timeoutPromise])
+                            .then((response) => {
+                              if (response instanceof Error) {
+                                console.error(
+                                  "%c🤘Xnl Reveal:%c Fetch error:",
+                                  "color: #00ff00; font-weight: bold",
+                                  "color: inherit",
+                                  response
+                                );
+                              } else {
+                                if (!response.ok) {
+                                  console.warn(
+                                    `🤘Xnl Reveal: Non-2xx Response (${response.status}) for ${modifiedURL}`
+                                  );
+                                }
+                                let contentType =
+                                  response.headers.get("content-type") ||
+                                  "text/html";
+
+                                if (
+                                  contentType.includes("text/html") &&
+                                  !contentType.includes("charset=")
+                                ) {
+                                  return response.text().then((text) => {
+                                    charsetXSS =
+                                      !text.includes("<meta charset=") &&
+                                      !text.includes("text/html; charset=");
+                                    return text;
+                                  });
+                                } else {
+                                  charsetXSS = false;
+                                  return response.text();
+                                }
+                              }
+                            })
+                            .then((text) => {
+                              if (checkSpecialChars && withSpecialChars) {
+                                const canaryRegex = new RegExp(
+                                  canaryToken + `.*?(['"<])xnl`
+                                );
+                                const match = canaryRegex.exec(text);
+
+                                if (match) {
+                                  const afterCanary = match[0];
+                                  if (afterCanary.includes("'"))
+                                    specialChars += "'";
+                                  if (afterCanary.includes('"'))
+                                    specialChars += '"';
+                                  if (afterCanary.includes("<"))
+                                    specialChars += "<";
+
+                                  reflectedParameters.push({
+                                    key,
+                                    specialChars,
+                                  });
+                                } else {
+                                  // Retry without special characters
+                                  performFetch(false);
+                                  return;
+                                }
+                              }
+
+                              if (specialChars === "") {
+                                if (text.includes(canaryToken)) {
+                                  reflectedParameters.push({
+                                    key,
+                                    specialChars,
+                                  });
+                                }
+                              }
+
+                              const alertData = {
+                                [modifiedURLForStorage]: true,
+                                [key]: true,
+                              };
+                              browser.storage.local.set(alertData);
+                              successfulRequests++;
+
+                              if (successfulRequests === totalParams) {
+                                if (reflectedParameters.length > 0) {
+                                  processReflectedParameters(
+                                    reflectedParameters,
+                                    charsetXSS
+                                  );
+                                }
+                                statusBar.remove();
+                              }
+                            })
+                            .catch((error) => {
+                              console.error("%c🤘Xnl Reveal:%c Fetch error: " + error.message, "color: #00ff00; font-weight: bold", "color: inherit");
+                              successfulRequests++;
+                              if (successfulRequests === totalParams) {
+                                statusBar.remove();
+                              }
+                            });
+                        }
+                      }
+                    );
+                  };
+
+                  performFetch(true);
+                });
+              }
+            }
+          });
+        }
+      } catch (error) {
+        console.error("%c🤘Xnl Reveal:%c An error occurred:", "color: #00ff00; font-weight: bold", "color: inherit", error);
+        statusBar.remove();
+      }
     }
 
     // Function to process reflected parameters
@@ -1016,185 +1287,6 @@ browser.storage.sync.get(
       return reflectionConsoleMsg;
     }
 
-    function runAfterPageLoad() {
-      try {
-        browser.runtime.sendMessage({ action: "getTabInfo" });
-
-        if (
-          extensionDisabled === "false" &&
-          (hiddenDisabled === "false" ||
-            disabledDisabled === "false" ||
-            reflectionsDisabled === "false" ||
-            waybackDisabled === "false")
-        ) {
-          isHostInScope((inScope) => {
-            if (inScope) {
-              if (waybackDisabled === "false") writeWaybackEndpoints();
-              if (hiddenDisabled === "false") showHiddenElements();
-              if (disabledDisabled === "false") enableDisabledElements();
-
-              if (reflectionsDisabled === "false") {
-                const params = new URLSearchParams(window.location.search);
-                const reflectedParameters = [];
-                let successfulRequests = 0;
-
-                params.forEach((value, key) => {
-                  let specialChars = "";
-                  const blacklistArray = paramBlacklist
-                    .split(",")
-                    .map((param) => param.trim());
-                  if (
-                    (blacklistArray.length === 1 &&
-                      blacklistArray[0] === key) ||
-                    blacklistArray.includes(key)
-                  ) {
-                    successfulRequests++;
-                    return;
-                  }
-
-                  const performFetch = (withSpecialChars) => {
-                    const modifiedParams = new URLSearchParams(params);
-                    if (withSpecialChars && checkSpecialChars) {
-                      modifiedParams.set(key, canaryToken + `"'<xnl`);
-                    } else {
-                      modifiedParams.set(key, canaryToken);
-                    }
-                    const modifiedURL = `${window.location.origin}${window.location.pathname}?${modifiedParams}`;
-                    const modifiedURLForStorage = replaceParameterValues(
-                      window.location.href,
-                      canaryToken
-                    );
-
-                    browser.storage.local.get(
-                      [modifiedURLForStorage, key],
-                      ({
-                        [modifiedURLForStorage]: urlData,
-                        [key]: paramData,
-                      }) => {
-                        if (!urlData || !paramData) {
-                          const timeoutPromise = new Promise(
-                            (resolve, reject) => {
-                              const timeoutError = new Error(
-                                `Xnl Reveal: Fetch timed out checking param "${key}" for URL: ${modifiedURL}`
-                              );
-                              setTimeout(() => reject(timeoutError), 30000);
-                            }
-                          );
-
-                          document.body.appendChild(statusBar);
-                          // Don't log fetching messages
-                          // logToDevtools(`Xnl Reveal: Fetching ${modifiedURL}`);
-
-                          Promise.race([fetch(modifiedURL), timeoutPromise])
-                            .then((response) => {
-                              if (response instanceof Error) {
-                                console.error(
-                                  "Xnl Reveal: Fetch error:",
-                                  response
-                                );
-                              } else {
-                                if (!response.ok) {
-                                  console.warn(
-                                    `Xnl Reveal: Non-2xx Response (${response.status}) for ${modifiedURL}`
-                                  );
-                                }
-                                let contentType =
-                                  response.headers.get("content-type") ||
-                                  "text/html";
-
-                                if (
-                                  contentType.includes("text/html") &&
-                                  !contentType.includes("charset=")
-                                ) {
-                                  return response.text().then((text) => {
-                                    charsetXSS =
-                                      !text.includes("<meta charset=") &&
-                                      !text.includes("text/html; charset=");
-                                    return text;
-                                  });
-                                } else {
-                                  charsetXSS = false;
-                                  return response.text();
-                                }
-                              }
-                            })
-                            .then((text) => {
-                              if (checkSpecialChars && withSpecialChars) {
-                                const canaryRegex = new RegExp(
-                                  canaryToken + `.*?(['"<])xnl`
-                                );
-                                const match = canaryRegex.exec(text);
-
-                                if (match) {
-                                  const afterCanary = match[0];
-                                  if (afterCanary.includes("'"))
-                                    specialChars += "'";
-                                  if (afterCanary.includes('"'))
-                                    specialChars += '"';
-                                  if (afterCanary.includes("<"))
-                                    specialChars += "<";
-
-                                  reflectedParameters.push({
-                                    key,
-                                    specialChars,
-                                  });
-                                } else {
-                                  // Retry without special characters
-                                  performFetch(false);
-                                  return;
-                                }
-                              }
-
-                              if (specialChars === "") {
-                                if (text.includes(canaryToken)) {
-                                  reflectedParameters.push({
-                                    key,
-                                    specialChars,
-                                  });
-                                }
-                              }
-
-                              const alertData = {
-                                [modifiedURLForStorage]: true,
-                                [key]: true,
-                              };
-                              browser.storage.local.set(alertData);
-                              successfulRequests++;
-
-                              if (successfulRequests === params.size) {
-                                if (reflectedParameters.length > 0) {
-                                  processReflectedParameters(
-                                    reflectedParameters,
-                                    charsetXSS
-                                  );
-                                }
-                                statusBar.remove();
-                              }
-                            })
-                            .catch((error) => {
-                              console.error("Xnl Reveal: Fetch error:", error);
-                              successfulRequests++;
-                              if (successfulRequests === params.size) {
-                                statusBar.remove();
-                              }
-                            });
-                        }
-                      }
-                    );
-                  };
-
-                  performFetch(true);
-                });
-              }
-            }
-          });
-        }
-      } catch (error) {
-        console.error("Xnl Reveal: An error occurred:", error);
-        statusBar.remove();
-      }
-    }
-
     // Use the window.onload event to trigger your code after the page has loaded.
     if (window.onload) {
       const existingOnLoad = window.onload;
@@ -1228,33 +1320,221 @@ browser.storage.sync.get(
       initialLoadComplete = true;
     }, 2000);
     
-    new MutationObserver(() => {
+    // Function to handle URL changes
+    function handleUrlChange() {
       const url = location.href;
       if (url !== lastUrl) {
         lastUrl = url;
-        console.log("XnlReveal: URL changed to", url);
+        console.log("%c🤘Xnl Reveal:%c URL changed to", "color: #00ff00; font-weight: bold", "color: inherit", url);
         
         // Don't trigger on initial load - runAfterPageLoad will handle it
         if (!initialLoadComplete) {
-          console.log("XnlReveal: Skipping URL change handler - initial load not complete");
+          console.log("%c🤘Xnl Reveal:%c Skipping URL change handler - initial load not complete", "color: #00ff00; font-weight: bold", "color: inherit");
           return;
         }
         
         // Debounce: Clear previous timeout and set a new one
         clearTimeout(urlChangeTimeout);
         urlChangeTimeout = setTimeout(() => {
-          // Only trigger wayback check on URL change, not full runAfterPageLoad
-          if (waybackDisabled === "false") {
-            isHostInScope((inScope) => {
-              if (inScope) {
-                console.log("XnlReveal: Calling writeWaybackEndpoints for new URL");
+          isHostInScope((inScope) => {
+            if (inScope) {
+              // Trigger wayback check on URL change
+              if (waybackDisabled === "false") {
+                console.log("%c🤘Xnl Reveal:%c Calling writeWaybackEndpoints for new URL", "color: #00ff00; font-weight: bold", "color: inherit");
                 writeWaybackEndpoints();
               }
-            });
-          }
+              
+              // Check for reflections if the new URL has parameters
+              if (reflectionsDisabled === "false") {
+                const params = new URLSearchParams(window.location.search);
+                if (params.size > 0) {
+                  console.log("%c🤘Xnl Reveal:%c New URL has parameters, checking for reflections", "color: #00ff00; font-weight: bold", "color: inherit");
+                  // Re-run the reflection check logic
+                  const reflectedParameters = [];
+                  let successfulRequests = 0;
+                  const totalParams = params.size;
+                  let paramIndex = 0;
+
+                  params.forEach((value, key) => {
+                    paramIndex++; // Increment for each param (whether blacklisted or not)
+                    const currentParamNumber = paramIndex; // Capture the index for this specific param
+                    
+                    let specialChars = "";
+                    const blacklistArray = paramBlacklist
+                      .split(",")
+                      .map((param) => param.trim());
+                    if (
+                      (blacklistArray.length === 1 &&
+                        blacklistArray[0] === key) ||
+                      blacklistArray.includes(key)
+                    ) {
+                      successfulRequests++;
+                      return;
+                    }
+
+                    const performFetch = (withSpecialChars) => {
+                      const modifiedParams = new URLSearchParams(params);
+                      if (withSpecialChars && checkSpecialChars) {
+                        modifiedParams.set(key, canaryToken + `"'<xnl`);
+                      } else {
+                        modifiedParams.set(key, canaryToken);
+                      }
+                      const modifiedURL = `${window.location.origin}${window.location.pathname}?${modifiedParams}`;
+                      const modifiedURLForStorage = replaceParameterValues(
+                        window.location.href,
+                        canaryToken
+                      );
+
+                      browser.storage.local.get(
+                        [modifiedURLForStorage, key],
+                        ({
+                          [modifiedURLForStorage]: urlData,
+                          [key]: paramData,
+                        }) => {
+                          if (!urlData || !paramData) {
+                            statusBar.textContent = REFLECTION_STATUS_MESSAGE;
+                            document.body.appendChild(statusBar);
+                            
+                            const timeoutPromise = new Promise(
+                              (resolve, reject) => {
+                                const timeoutError = new Error(
+                                  `Xnl Reveal: Fetch timed out checking param "${key}" for URL: ${modifiedURL}`
+                                );
+                                setTimeout(() => reject(timeoutError), 30000);
+                              }
+                            );
+                            // Don't log fetching messages
+                            // logToDevtools(`Xnl Reveal: Fetching ${modifiedURL}`);
+
+                            Promise.race([fetch(modifiedURL), timeoutPromise])
+                              .then((response) => {
+                                if (response instanceof Error) {
+                                  console.error(
+                                    "%c🤘Xnl Reveal:%c Fetch error:",
+                                    "color: #00ff00; font-weight: bold",
+                                    "color: inherit",
+                                    response
+                                  );
+                                } else {
+                                  if (!response.ok) {
+                                    console.warn(
+                                      `🤘Xnl Reveal: Non-2xx Response (${response.status}) for ${modifiedURL}`
+                                    );
+                                  }
+                                  let contentType =
+                                    response.headers.get("content-type") ||
+                                    "text/html";
+
+                                  if (
+                                    contentType.includes("text/html") &&
+                                    !contentType.includes("charset=")
+                                  ) {
+                                    return response.text().then((text) => {
+                                      charsetXSS =
+                                        !text.includes("<meta charset=") &&
+                                        !text.includes("text/html; charset=");
+                                      return text;
+                                    });
+                                  } else {
+                                    charsetXSS = false;
+                                    return response.text();
+                                  }
+                                }
+                              })
+                              .then((text) => {
+                                if (checkSpecialChars && withSpecialChars) {
+                                  const canaryRegex = new RegExp(
+                                    canaryToken + `.*?(['"<])xnl`
+                                  );
+                                  const match = canaryRegex.exec(text);
+
+                                  if (match) {
+                                    const afterCanary = match[0];
+                                    if (afterCanary.includes("'"))
+                                      specialChars += "'";
+                                    if (afterCanary.includes('"'))
+                                      specialChars += '"';
+                                    if (afterCanary.includes("<"))
+                                      specialChars += "<";
+
+                                    reflectedParameters.push({
+                                      key,
+                                      specialChars,
+                                    });
+                                  } else {
+                                    // Retry without special characters
+                                    performFetch(false);
+                                    return;
+                                  }
+                                }
+
+                                if (specialChars === "") {
+                                  if (text.includes(canaryToken)) {
+                                    reflectedParameters.push({
+                                      key,
+                                      specialChars,
+                                    });
+                                  }
+                                }
+
+                                const alertData = {
+                                  [modifiedURLForStorage]: true,
+                                  [key]: true,
+                                };
+                                browser.storage.local.set(alertData);
+                                successfulRequests++;
+
+                                if (successfulRequests === params.size) {
+                                  if (reflectedParameters.length > 0) {
+                                    processReflectedParameters(
+                                      reflectedParameters,
+                                      charsetXSS
+                                    );
+                                  }
+                                  statusBar.remove();
+                                }
+                              })
+                              .catch((error) => {
+                                console.error("%c🤘Xnl Reveal:%c Fetch error: " + error.message, "color: #00ff00; font-weight: bold", "color: inherit");
+                                successfulRequests++;
+                                if (successfulRequests === params.size) {
+                                  statusBar.remove();
+                                }
+                              });
+                          }
+                        }
+                      );
+                    };
+
+                    performFetch(true);
+                  });
+                }
+              }
+            }
+          });
         }, 500); // Wait 500ms after URL stops changing
       }
-    }).observe(document, { subtree: true, childList: true });
+    }
+    
+    // Watch for DOM mutations (catches some SPA navigation)
+    new MutationObserver(handleUrlChange).observe(document, { subtree: true, childList: true });
+    
+    // Listen for popstate events (browser back/forward buttons)
+    window.addEventListener('popstate', handleUrlChange);
+    
+    // Intercept pushState and replaceState (most common SPA navigation method)
+    const originalPushState = history.pushState;
+    const originalReplaceState = history.replaceState;
+    
+    history.pushState = function() {
+      originalPushState.apply(this, arguments);
+      handleUrlChange();
+    };
+    
+    history.replaceState = function() {
+      originalReplaceState.apply(this, arguments);
+      handleUrlChange();
+    };
 
     // Check if the extension is enabled and an option is selected. This will run again after the delay to catch dynamic content
     try {
@@ -1280,7 +1560,7 @@ browser.storage.sync.get(
       }
     } catch (error) {
       // Handle other errors here
-      console.error("Xnl Reveal: An error occurred:", error);
+      console.error("%c🤘Xnl Reveal:%c An error occurred:", "color: #00ff00; font-weight: bold", "color: inherit", error);
     }
   }
 );

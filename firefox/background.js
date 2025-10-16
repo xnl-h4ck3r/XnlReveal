@@ -1,9 +1,119 @@
-const { tabs, contextMenus, storage, runtime } = browser;
-const checkIntervalMinutes = 10;
-const alarmName = "checkWaybackStatus";
+// Configuration constants
+const MAX_STORED_MESSAGES = 1000; // Maximum messages to keep in storage
+const CHECK_INTERVAL_MINUTES = 10; // How often to check Wayback status
+const WAYBACK_TIMEOUT_MS = 30000; // Wayback API timeout in milliseconds (30 seconds)
+const ALARM_NAME = "checkWaybackStatus";
+
+console.log("%c🤘Xnl Reveal%c Background script loaded", "color: #00ff00; font-weight: bold", "color: inherit");
+
+const chromeTabs = browser.tabs;
 
 // Store devtools panel connections by tab ID
 const devtoolsPanels = {};
+
+// Wayback request queue managed in background (persists across content script reloads)
+let waybackQueue = [];
+let isProcessingWayback = false;
+
+// Helper to log messages to devtools from background script
+function logToDevtoolsFromBackground(url, message, type = "info") {
+  const timestamp = Date.now();
+  const fullMessage = `Xnl Reveal: Wayback request for ${url} - ${message}`;
+  
+  // Store in local storage for devtools panel to pick up
+  browser.storage.local.get(['xnlreveal_all_messages'], (result) => {
+    const messages = result['xnlreveal_all_messages'] || [];
+    messages.push({ 
+      type: type, 
+      text: fullMessage, 
+      timestamp: timestamp 
+    });
+    if (messages.length > MAX_STORED_MESSAGES) {
+      messages.shift();
+    }
+    browser.storage.local.set({ 'xnlreveal_all_messages': messages });
+  });
+}
+
+function processWaybackQueue() {
+  console.log("%c🤘Xnl Reveal%c Background: processWaybackQueue - isProcessing:", "color: #00ff00; font-weight: bold", "color: inherit", isProcessingWayback, "Queue length:", waybackQueue.length);
+  
+  if (isProcessingWayback || waybackQueue.length === 0) {
+    return;
+  }
+  
+  isProcessingWayback = true;
+  const { location, sendResponse } = waybackQueue.shift();
+  
+  console.log("%c🤘Xnl Reveal%c Background: Processing Wayback request for:", "color: #00ff00; font-weight: bold", "color: inherit", location, "- Remaining:", waybackQueue.length);
+  
+  const currentURL = location;
+  const newURL = `https://web.archive.org/cdx/search/cdx?url=${currentURL}*&fl=original&collapse=urlkey&limit=1000&filter=!mimetype:warc/revisit|text/css|image/jpeg|image/jpg|image/png|image/svg.xml|image/gif|image/tiff|image/webp|image/bmp|image/vnd|image/x-icon|image/vnd.microsoft.icon|font/ttf|font/woff|font/woff2|font/x-woff2|font/x-woff|font/otf|audio/mpeg|audio/wav|audio/webm|audio/aac|audio/ogg|audio/wav|audio/webm|video/mp4|video/mpeg|video/webm|video/ogg|video/mp2t|video/webm|video/x-msvideo|video/x-flv|application/font-woff|application/font-woff2|application/x-font-woff|application/x-font-woff2|application/vnd.ms-fontobject|application/font-sfnt|application/vnd.android.package-archive|binary/octet-stream|application/octet-stream|application/pdf|application/x-font-ttf|application/x-font-otf|video/webm|video/3gpp|application/font-ttf|audio/mp3|audio/x-wav|image/pjpeg|audio/basic|application/font-otf&filter=!statuscode:404|301|302`;
+
+  const controller = new AbortController();
+  let timedOut = false;
+  const timeoutId = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, WAYBACK_TIMEOUT_MS);
+
+  fetch(newURL, { signal: controller.signal })
+    .then((response) => {
+      clearTimeout(timeoutId);
+      const statusCode = response.status;
+      return response.text().then((data) => {
+        updateIcon(statusCode);
+        return { waybackData: data, statusCode: statusCode, url: currentURL };
+      });
+    })
+    .then((result) => {
+      console.log("%c🤘Xnl Reveal%c Background: Wayback request completed for:", "color: #00ff00; font-weight: bold", "color: inherit", location);
+      try {
+        sendResponse(result);
+      } catch (e) {
+        console.log("%c🤘Xnl Reveal%c Background: Could not send response (content script terminated)", "color: #00ff00; font-weight: bold", "color: inherit");
+      }
+      isProcessingWayback = false;
+      processWaybackQueue(); // Process next
+    })
+    .catch((error) => {
+      clearTimeout(timeoutId);
+      console.log("%c🤘Xnl Reveal%c Background: Wayback request failed for:", "color: #00ff00; font-weight: bold", "color: inherit", location, "-", error.message);
+      console.log("%c🤘Xnl Reveal%c Background: Error name:", "color: #00ff00; font-weight: bold", "color: inherit", error.name, "- Timed out:", timedOut);
+      
+      let errorMessage;
+      if (error.name === 'AbortError') {
+        if (timedOut) {
+          errorMessage = `Request timeout after ${WAYBACK_TIMEOUT_MS/1000} seconds (Wayback Machine took too long to respond)`;
+        } else {
+          errorMessage = 'Request aborted (likely due to navigation)';
+        }
+      } else {
+        errorMessage = error.message;
+      }
+      
+      // Log directly to DevTools storage since content script is likely gone
+      console.log("%c🤘Xnl Reveal%c Background: Calling logToDevtoolsFromBackground with:", "color: #00ff00; font-weight: bold", "color: inherit", currentURL, errorMessage);
+      try {
+        logToDevtoolsFromBackground(currentURL, errorMessage, "warn");
+        console.log("%c🤘Xnl Reveal%c Background: logToDevtoolsFromBackground completed", "color: #00ff00; font-weight: bold", "color: inherit");
+      } catch(logErr) {
+        console.error("%c🤘Xnl Reveal%c Background: logToDevtoolsFromBackground error:", "color: #00ff00; font-weight: bold", "color: inherit", logErr);
+      }
+      
+      // Also try to send response in case content script is still alive
+      const errorResponse = { error: errorMessage, timeout: false, url: currentURL };
+      try {
+        sendResponse(errorResponse);
+        console.log("%c🤘Xnl Reveal%c Background: sendResponse succeeded", "color: #00ff00; font-weight: bold", "color: inherit");
+      } catch (e) {
+        console.log("%c🤘Xnl Reveal%c Background: sendResponse failed (expected if content script terminated):", "color: #00ff00; font-weight: bold", "color: inherit", e.message);
+      }
+      
+      isProcessingWayback = false;
+      processWaybackQueue(); // Process next
+    });
+}
 
 // Function to update the extension icon based on the response status
 function updateIcon(responseStatus) {
@@ -40,11 +150,11 @@ function checkWaybackStatus() {
 }
 
 // Set up the initial alarm
-browser.alarms.create(alarmName, { periodInMinutes: checkIntervalMinutes });
+browser.alarms.create(ALARM_NAME, { periodInMinutes: CHECK_INTERVAL_MINUTES });
 
 // Add an event listener for the alarm
 browser.alarms.onAlarm.addListener((alarm) => {
-  if (alarm.name === alarmName) {
+  if (alarm.name === ALARM_NAME) {
     checkWaybackStatus();
   }
 });
@@ -76,6 +186,12 @@ let contextMenuGoogle = {
 let contextMenuFofa = {
   id: "showFofaSearch",
   title: "Show FOFA domain search",
+  contexts: ["all"],
+};
+
+let contextMenuWordlist = {
+  id: "createWordList",
+  title: "Create word list",
   contexts: ["all"],
 };
 
@@ -141,7 +257,7 @@ browser.contextMenus.removeAll(() => {
 
 browser.contextMenus.onClicked.addListener(function (clickData) {
   // Find the active tab
-  tabs.query({ active: true, currentWindow: true }).then((tabs) => {
+  chromeTabs.query({ active: true, currentWindow: true }, (tabs) => {
     if (tabs[0]) {
       // Execute the action for the context menu
       browser.tabs.sendMessage(tabs[0].id, {
@@ -163,30 +279,28 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     // Forward the message to the devtools panel
     const tabId = sender.tab ? sender.tab.id : request.tabId;
     const timestamp = Date.now();
-    console.log("Background received logToDevtools for tab:", tabId, "Message:", request.message);
+    console.log("%c🤘Xnl Reveal%c: Background received logToDevtools for tab:", "color: #00ff00; font-weight: bold", "color: inherit", tabId, "Message:", request.message);
     
     // Try to send to panel via port connection first
     const sentViaPort = sendToDevtools(tabId, request.logType || "info", request.message, timestamp);
     
     // Always write to storage for persistence across sessions
-    return browser.storage.local.get(['xnlreveal_all_messages']).then((result) => {
+    browser.storage.local.get(['xnlreveal_all_messages'], (result) => {
       const messages = result['xnlreveal_all_messages'] || [];
       messages.push({ 
         type: request.logType || "info", 
         text: request.message, 
         timestamp: timestamp 
       });
-      // Keep only last 1000 messages
-      if (messages.length > 1000) {
+      // Keep only last MAX_STORED_MESSAGES
+      if (messages.length > MAX_STORED_MESSAGES) {
         messages.shift();
       }
-      return browser.storage.local.set({ 'xnlreveal_all_messages': messages });
-    }).then(() => {
-      return { success: true };
-    }).catch((error) => {
-      console.error("Error storing message:", error);
-      return { success: false, error: error.message };
+      browser.storage.local.set({ 'xnlreveal_all_messages': messages });
     });
+    
+    // Don't return true - we're not sending an async response
+    return false;
   }
   if (request.action === "getTabInfo") {
     browser.browserAction.setBadgeText({ text: "" }); // Reset the badge on the icon
@@ -208,7 +322,7 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         sendResponse({ currentHost });
 
         // Create the dynamic menu to add/remove the host to the white/black list
-        // Only create if the current scope has a dot in it (e.g. ignore things like chrome://extensions and about:addons)
+        // Only create if the current scope has a dot in it (e.g. ignore things like chome://extensions and about:addons)
         if (currentHost.includes(".")) {
           createDynamicContextMenu(currentHost.replace(/^www\./, ""));
         }
@@ -221,45 +335,19 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     // Indicate that you will respond asynchronously
     return true;
   }
+
   if (request.action === "fetchWaybackData") {
-    const currentURL = request.location; // Get the current URL from the content script
-
-    // Construct the URL for fetching Wayback Machine data with limit of 5000 results
-    const newURL = `https://web.archive.org/cdx/search/cdx?url=${currentURL}*&fl=original&collapse=urlkey&limit=1000&filter=!mimetype:warc/revisit|text/css|image/jpeg|image/jpg|image/png|image/svg.xml|image/gif|image/tiff|image/webp|image/bmp|image/vnd|image/x-icon|image/vnd.microsoft.icon|font/ttf|font/woff|font/woff2|font/x-woff2|font/x-woff|font/otf|audio/mpeg|audio/wav|audio/webm|audio/aac|audio/ogg|audio/wav|audio/webm|video/mp4|video/mpeg|video/webm|video/ogg|video/mp2t|video/webm|video/x-msvideo|video/x-flv|application/font-woff|application/font-woff2|application/x-font-woff|application/x-font-woff2|application/vnd.ms-fontobject|application/font-sfnt|application/vnd.android.package-archive|binary/octet-stream|application/octet-stream|application/pdf|application/x-font-ttf|application/x-font-otf|video/webm|video/3gpp|application/font-ttf|audio/mp3|audio/x-wav|image/pjpeg|audio/basic|application/font-otf&filter=!statuscode:404|301|302`;
-
-    // Create abort controller for timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
-
-    // Make the cross-origin request from the background script
-    fetch(newURL, { signal: controller.signal })
-      .then((response) => {
-        clearTimeout(timeoutId);
-        const statusCode = response.status; // Get the HTTP status code
-
-        // Process the Wayback data here
-        return response.text().then((data) => {
-          updateIcon(statusCode); // Call updateIcon with the status code
-          return { waybackData: data, statusCode: statusCode, url: currentURL };
-        });
-      })
-      .then((result) => {
-        // Continue with processing the response
-        sendResponse(result);
-      })
-      .catch((error) => {
-        clearTimeout(timeoutId);
-        // Check if it was a timeout error
-        if (error.name === 'AbortError') {
-          sendResponse({ error: 'Request timeout after 60 seconds', timeout: true, url: currentURL });
-        } else {
-          sendResponse({ error: error.message, url: currentURL });
-        }
-      });
-
-    // Return true to indicate that we will use sendResponse asynchronously
+    const location = request.location;
+    console.log("%c🤘Xnl Reveal%c Background: Queueing Wayback request for:", "color: #00ff00; font-weight: bold", "color: inherit", location, "- Queue length:", waybackQueue.length);
+    
+    // Add to queue
+    waybackQueue.push({ location, sendResponse });
+    processWaybackQueue();
+    
+    // Return true to indicate async response
     return true;
   }
+
   // Set the badge on the extension icon to the number of reflected parameters found
   if (request.action === "updateBadge") {
     const num = request.number; // Get the number of reflected parameters
@@ -270,23 +358,23 @@ browser.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     } else {
       browser.browserAction.setBadgeBackgroundColor({ color: "green" });
     }
+    return false; // Don't expect async response
   }
-  return true;
 });
 
 // Handle devtools panel connections
 browser.runtime.onConnect.addListener(function (port) {
-  console.log("Port connected:", port.name);
+  console.log("%c🤘Xnl Reveal%c: Port connected:", "color: #00ff00; font-weight: bold", "color: inherit", port.name);
   if (port.name === "devtools-page") {
     let tabId;
 
     // Listen for messages from the devtools panel
     port.onMessage.addListener(function (message) {
-      console.log("Message from devtools:", message);
+      console.log("%c🤘Xnl Reveal%c: Message from devtools:", "color: #00ff00; font-weight: bold", "color: inherit", message);
       if (message.name === "panel-ready") {
         tabId = message.tabId;
         devtoolsPanels[tabId] = port;
-        console.log("Panel registered for tab:", tabId, "Total panels:", Object.keys(devtoolsPanels).length);
+        console.log("%c🤘Xnl Reveal%c: Panel registered for tab:", "color: #00ff00; font-weight: bold", "color: inherit", tabId, "Total panels:", Object.keys(devtoolsPanels).length);
       }
     });
 
@@ -300,15 +388,45 @@ browser.runtime.onConnect.addListener(function (port) {
   }
 });
 
+// Auto-refresh context menu when tab is activated
+browser.tabs.onActivated.addListener((activeInfo) => {
+  browser.tabs.get(activeInfo.tabId, (tab) => {
+    if (tab && tab.url) {
+      try {
+        const currentHost = new URL(tab.url).host;
+        if (currentHost && currentHost.includes(".")) {
+          createDynamicContextMenu(currentHost.replace(/^www\./, ""));
+        }
+      } catch (error) {
+        // Invalid URL, ignore
+      }
+    }
+  });
+});
+
+// Also refresh when URL changes in active tab
+browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.url && tab.active) {
+    try {
+      const currentHost = new URL(changeInfo.url).host;
+      if (currentHost && currentHost.includes(".")) {
+        createDynamicContextMenu(currentHost.replace(/^www\./, ""));
+      }
+    } catch (error) {
+      // Invalid URL, ignore
+    }
+  }
+});
+
 // Function to send message to devtools panel
 function sendToDevtools(tabId, type, text, timestamp) {
-  console.log("sendToDevtools called for tab:", tabId, "Panels:", Object.keys(devtoolsPanels));
+  console.log("%c🤘Xnl Reveal%c: sendToDevtools called for tab:", "color: #00ff00; font-weight: bold", "color: inherit", tabId, "Panels:", Object.keys(devtoolsPanels));
   if (devtoolsPanels[tabId]) {
-    console.log("Sending to panel:", type, text);
+    console.log("%c🤘Xnl Reveal%c: Sending to panel:", "color: #00ff00; font-weight: bold", "color: inherit", type, text);
     devtoolsPanels[tabId].postMessage({ type: type, text: text, timestamp: timestamp });
     return true; // Successfully sent via port
   } else {
-    console.log("No panel found for tab:", tabId);
+    console.log("%c🤘Xnl Reveal%c: No panel found for tab:", "color: #00ff00; font-weight: bold", "color: inherit", tabId);
     return false; // No port connection
   }
 }
@@ -316,12 +434,20 @@ function sendToDevtools(tabId, type, text, timestamp) {
 browser.runtime.onInstalled.addListener(() => {
   // Set defaults on installation
   browser.storage.sync.set({ canaryToken: "xnlreveal" });
+  browser.storage.sync.set({ checkSpecialChars: false });
   browser.storage.sync.set({ showAlerts: true });
   browser.storage.sync.set({ copyToClipboard: false });
   browser.storage.sync.set({ paramBlacklist: "" });
   browser.storage.sync.set({ checkDelay: "2" });
   browser.storage.sync.set({ waybackRegex: "" });
+  browser.storage.sync.set({ scopeType: "" });
 
   // Schedule the alarm on installation
-  browser.alarms.create(alarmName, { periodInMinutes: checkIntervalMinutes });
+  browser.alarms.create(ALARM_NAME, { periodInMinutes: CHECK_INTERVAL_MINUTES });
+  
+  // Check Wayback status on install
+  checkWaybackStatus();
 });
+
+// Check Wayback status on startup
+checkWaybackStatus();

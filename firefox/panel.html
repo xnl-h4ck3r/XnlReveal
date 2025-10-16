@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>XnlReveal Panel</title>
+  <title>Xnl Reveal Panel</title>
   <link rel="stylesheet" type="text/css" href="xnl.css">
   <style>
     body {
@@ -16,7 +16,6 @@
       flex-direction: column;
       user-select: text;
       -webkit-user-select: text;
-      -moz-user-select: text;
     }
     h1 {
       background-color: #2d2d30;
@@ -30,7 +29,6 @@
       align-items: center;
       justify-content: space-between;
       user-select: none;
-      -moz-user-select: none;
     }
     h1 span {
       display: flex;
@@ -63,7 +61,6 @@
       display: flex;
       gap: 10px;
       user-select: none;
-      -moz-user-select: none;
     }
     #controls button {
       background-color: #0e639c;
@@ -83,7 +80,6 @@
       padding: 10px 15px;
       user-select: text;
       -webkit-user-select: text;
-      -moz-user-select: text;
     }
     .message {
       margin-bottom: 8px;
@@ -97,7 +93,6 @@
       color: #d4d4d4;
       user-select: text;
       -webkit-user-select: text;
-      -moz-user-select: text;
       cursor: text;
     }
     .message.error {
@@ -123,12 +118,10 @@
       font-size: 11px;
       margin-right: 8px;
       user-select: text;
-      -moz-user-select: text;
     }
     .message span {
       user-select: text;
       -webkit-user-select: text;
-      -moz-user-select: text;
     }
     #messages::-webkit-scrollbar {
       width: 10px;
@@ -147,11 +140,12 @@
 <body>
   <h1>
     <span>
-      <img src="images/icon16.png" alt="XnlReveal">XnlReveal Messages
+      <img src="images/icon16.png" alt="Xnl Reveal">Xnl Reveal Messages
     </span>
     <a href="https://ko-fi.com/xnlh4ck3r" target="_blank" class="coffee-link">Want to buy me a coffee? ☕</a>
   </h1>
   <div id="controls">
+    <input type="text" id="searchInput" placeholder="Filter messages..." style="flex: 1; padding: 5px 12px; background-color: #3c3c3c; color: #cccccc; border: 1px solid #3e3e42; border-radius: 2px; font-size: 12px;">
     <button id="copyAllBtn">Copy All Messages</button>
     <button id="clearBtn">Clear Messages and Cache</button>
   </div>

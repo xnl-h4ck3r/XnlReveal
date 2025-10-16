@@ -1,5 +1,26 @@
 ## Changelog
 
+- v4.1
+
+  - New
+
+    - Added search/filter functionality to the DevTools panel. A search input field now allows real-time filtering of messages, making it easy to find specific reflections or Wayback results among the stored messages.
+    - Added automatic context menu refresh. The context menu now automatically updates when switching tabs or when URLs change, eliminating the need for manual page refreshes to see the correct host in the add/remove scope menu item.
+    - Added reflection checking on URL changes for SPAs (Single Page Applications). When the URL changes without a full page reload (common in modern web apps), the extension now automatically checks for parameter reflections if the new URL contains query parameters. This now includes comprehensive detection via DOM mutations, popstate events, and History API interception (pushState/replaceState) to catch all types of client-side navigation.
+
+  - Changed
+
+    - Fixed duplicate icon definitions in manifest.json files. The redundant `iconnoway` icon definitions that were being overwritten have been removed.
+    - Enforced consistent memory management limits. Both in-memory message storage and local storage now respect the 1000 message limit, preventing unlimited memory growth.
+    - Extracted hardcoded timeout and interval values to configuration constants at the top of files (`MAX_STORED_MESSAGES`, `CHECK_INTERVAL_MINUTES`, `WAYBACK_TIMEOUT_MS`, `STORAGE_POLL_INTERVAL_MS`) for easier maintenance. Reduced Wayback timeout from 60 to 30 seconds to improve performance and reduce memory usage when multiple requests are in flight.
+    - Reduced Wayback endpoint display limit from 5000 to 10 lines to improve DevTools readability. A truncation message shows the total number of endpoints found.
+    - Fixed whitelist/blacklist behavior when scope list is empty. An empty whitelist now correctly processes nothing (previously processed everything), while an empty blacklist processes everything. This makes the behavior more intuitive and secure by default. Added a console message to inform users when the whitelist is empty.
+    - Fixed message channel error that prevented some parameter searches and Wayback messages from being written. The `logToDevtools` handler was incorrectly returning `true` for an async response without actually sending one, causing "message channel closed" errors. The response callback has been removed since it's not needed.
+    - Fixed "Extension context invalidated" errors in DevTools panel. Added proper error handling for when the extension is reloaded while the DevTools panel is open, preventing uncaught errors from the polling interval.
+    - Fixed issue where rapid navigation would cause Wayback requests to be silently dropped. The root cause was that content scripts are reloaded on navigation, losing any pending callbacks. Moved the Wayback request queue to the background script where it persists across page navigations, ensuring all requests are processed sequentially. When navigation aborts a pending request, the error is logged directly to DevTools storage so users can see what happened.
+    - Improved console message formatting.
+    - Improved parameter reflection status bar message. Added progress indicator showing current/total (e.g., "3/5") so users can see exactly how many parameters have been checked and how many remain.
+
 - v4.0
 
   - New

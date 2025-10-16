@@ -1,5 +1,5 @@
 chrome.devtools.panels.create(
-  "XnlReveal",
+  "Xnl Reveal",
   "images/icon16.png",
   "panel.html",
   function (panel) {

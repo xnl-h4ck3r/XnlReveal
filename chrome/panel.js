@@ -1,15 +1,21 @@
+// Configuration constants
+const MAX_STORED_MESSAGES = 1000; // Maximum messages to keep in storage and memory
+const STORAGE_POLL_INTERVAL_MS = 500; // How often to check storage for new messages
+
 const messagesDiv = document.getElementById("messages");
 const clearBtn = document.getElementById("clearBtn");
 const copyAllBtn = document.getElementById("copyAllBtn");
+const searchInput = document.getElementById("searchInput");
 
 console.log("Panel.js loaded");
 
 const tabId = chrome.devtools.inspectedWindow.tabId;
 console.log("Panel tab ID:", tabId);
 
-// Store all messages for copying
+// Store all messages for copying (limited to MAX_STORED_MESSAGES)
 const allMessages = [];
 const displayedMessages = new Set(); // Track displayed messages to prevent duplicates
+let currentFilter = ""; // Track current search filter
 
 // Function to format timestamp from milliseconds
 function formatTimestamp(timestampMs) {
@@ -42,6 +48,12 @@ function addMessage(type, text, timestampMs) {
   // Store message for copying at the beginning (newest first)
   allMessages.unshift({ timestamp, type, text });
   
+  // Enforce memory limit - keep only MAX_STORED_MESSAGES
+  if (allMessages.length > MAX_STORED_MESSAGES) {
+    const removed = allMessages.splice(MAX_STORED_MESSAGES);
+    console.log(`Trimmed ${removed.length} old messages from memory`);
+  }
+  
   const messageElement = document.createElement("div");
   messageElement.classList.add("message");
 
@@ -61,9 +73,9 @@ function addMessage(type, text, timestampMs) {
   
   const text_span = document.createElement("span");
   
-  // Limit display to first 100 lines for performance
+  // Limit display to first 10 lines initially, with expandable button
   const lines = text.split('\n');
-  const MAX_LINES = 100;
+  const MAX_LINES = 10;
   
   if (lines.length > MAX_LINES) {
     const truncatedText = lines.slice(0, MAX_LINES).join('\n');
@@ -118,17 +130,33 @@ let lastMessageId = 0;
 let loadedFromStorage = false;
 
 // Load existing messages from storage on startup
-chrome.storage.local.get(['xnlreveal_all_messages'], (result) => {
-  const messages = result['xnlreveal_all_messages'] || [];
-  console.log("Loading", messages.length, "messages from storage on startup");
-  messages.forEach(msg => {
-    addMessage(msg.type, msg.text, msg.timestamp);
+try {
+  chrome.storage.local.get(['xnlreveal_all_messages'], (result) => {
+    if (chrome.runtime.lastError) {
+      console.log("Error loading initial messages:", chrome.runtime.lastError.message);
+      loadedFromStorage = true; // Mark as loaded to allow polling
+      return;
+    }
+    const messages = result['xnlreveal_all_messages'] || [];
+    console.log("Loading", messages.length, "messages from storage on startup");
+    messages.forEach(msg => {
+      addMessage(msg.type, msg.text, msg.timestamp);
+    });
+    lastMessageId = messages.length;
+    loadedFromStorage = true;
   });
-  lastMessageId = messages.length;
-  loadedFromStorage = true;
-});
+} catch (error) {
+  console.log("Error loading initial messages:", error);
+  loadedFromStorage = true; // Mark as loaded to allow polling
+}
 
 function checkForMessages() {
+  // Check if extension context is still valid
+  if (!chrome.runtime?.id) {
+    console.log("Extension context invalidated, stopping message checks");
+    return;
+  }
+  
   // Only poll storage if we haven't received messages via port
   if (receivedViaPort) {
     console.log("Skipping storage poll - receiving via port connection");
@@ -140,49 +168,79 @@ function checkForMessages() {
     return;
   }
   
-  chrome.storage.local.get(['xnlreveal_all_messages'], (result) => {
-    const messages = result['xnlreveal_all_messages'] || [];
-    console.log("Checking storage, found", messages.length, "messages, lastMessageId:", lastMessageId);
-    if (messages.length > lastMessageId) {
-      console.log("New messages found:", messages.length - lastMessageId);
-      for (let i = lastMessageId; i < messages.length; i++) {
-        const msg = messages[i];
-        addMessage(msg.type, msg.text, msg.timestamp);
+  try {
+    chrome.storage.local.get(['xnlreveal_all_messages'], (result) => {
+      if (chrome.runtime.lastError) {
+        console.log("Storage access error (context may be invalidated):", chrome.runtime.lastError.message);
+        return;
       }
-      lastMessageId = messages.length;
-    }
-  });
+      
+      const messages = result['xnlreveal_all_messages'] || [];
+      console.log("Checking storage, found", messages.length, "messages, lastMessageId:", lastMessageId);
+      if (messages.length > lastMessageId) {
+        console.log("New messages found:", messages.length - lastMessageId);
+        for (let i = lastMessageId; i < messages.length; i++) {
+          const msg = messages[i];
+          addMessage(msg.type, msg.text, msg.timestamp);
+        }
+        lastMessageId = messages.length;
+      }
+    });
+  } catch (error) {
+    console.log("Error checking messages (extension context may be invalidated):", error);
+  }
 }
 
-// Poll every 500ms for new messages
-setInterval(checkForMessages, 500);
+// Poll every STORAGE_POLL_INTERVAL_MS for new messages
+setInterval(checkForMessages, STORAGE_POLL_INTERVAL_MS);
 
 // Check immediately on load
 checkForMessages();
 
 // Clear messages button handler
 clearBtn.addEventListener("click", function() {
-  messagesDiv.innerHTML = "";
-  allMessages.length = 0; // Clear the array
-  displayedMessages.clear(); // Clear the set
-  lastMessageId = 0;
-  
   // Clear all stored messages and wayback cache
-  chrome.storage.local.get(null, function(items) {
-    const keysToRemove = ['xnlreveal_all_messages'];
-    
-    // Find all wayback:// keys
-    for (const key in items) {
-      if (key.startsWith('wayback://')) {
-        keysToRemove.push(key);
+  try {
+    chrome.storage.local.get(null, function(items) {
+      if (chrome.runtime.lastError) {
+        console.log("Error getting storage items:", chrome.runtime.lastError.message);
+        return;
       }
-    }
-    
-    // Remove all found keys
-    chrome.storage.local.remove(keysToRemove, function() {
-      console.log("Cleared messages and wayback cache:", keysToRemove.length, "items");
+      
+      const keysToRemove = ['xnlreveal_all_messages'];
+      
+      // Find all wayback:// keys
+      for (const key in items) {
+        if (key.startsWith('wayback://')) {
+          keysToRemove.push(key);
+        }
+      }
+      
+      // Remove all found keys
+      chrome.storage.local.remove(keysToRemove, function() {
+        if (chrome.runtime.lastError) {
+          console.log("Error removing storage items:", chrome.runtime.lastError.message);
+          return;
+        }
+        console.log("Cleared messages and wayback cache:", keysToRemove.length, "items");
+        
+        // Now clear the display AFTER storage is cleared
+        messagesDiv.innerHTML = "";
+        allMessages.length = 0; // Clear the array
+        displayedMessages.clear(); // Clear the set
+        lastMessageId = 0;
+        
+        // Add a confirmation message (use correct function signature)
+        addMessage(
+          "info",
+          "Xnl Reveal: Messages and cache cleared. If new messages don't appear, close and reopen this DevTools panel.",
+          Date.now()
+        );
+      });
     });
-  });
+  } catch (error) {
+    console.log("Error clearing storage:", error);
+  }
 });
 
 // Copy all messages button handler
@@ -227,11 +285,29 @@ copyAllBtn.addEventListener("click", function() {
   }
 });
 
+// Search/Filter functionality
+searchInput.addEventListener("input", function() {
+  currentFilter = this.value.toLowerCase().trim();
+  filterMessages();
+});
+
+function filterMessages() {
+  const messages = messagesDiv.querySelectorAll(".message");
+  messages.forEach(message => {
+    if (!currentFilter) {
+      message.style.display = "";
+    } else {
+      const text = message.textContent.toLowerCase();
+      message.style.display = text.includes(currentFilter) ? "" : "none";
+    }
+  });
+}
+
 // Send a message to the background script to indicate that the panel is ready
 backgroundPageConnection.postMessage({ name: "panel-ready", tabId: tabId });
 console.log("Sent panel-ready message for tab:", tabId);
 
 // Don't add initialization message
 // setTimeout(() => {
-//   addMessage("info", "XnlReveal panel initialized and ready for messages");
+//   addMessage("info", "Xnl Reveal panel initialized and ready for messages");
 // }, 100);

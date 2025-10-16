@@ -1,5 +1,5 @@
 browser.devtools.panels.create(
-  "XnlReveal",
+  "Xnl Reveal",
   "images/icon16.png",
   "panel.html"
 ).then((panel) => {
