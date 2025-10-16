@@ -1,6 +1,6 @@
 <center><img src="https://github.com/xnl-h4ck3r/XnlReveal/blob/main/images/title.png"></center>
 
-## About - v4.1
+## About - v4.2
 
 This is a **Chrome/Firefox Extension** that can do the following:
 

@@ -5,6 +5,36 @@ const enableWaybackButton = document.getElementById("enableWayback");
 const enableHiddenButton = document.getElementById("enableHidden");
 const enableDisabledButton = document.getElementById("enableDisabled");
 
+// Check version and display
+async function checkVersion() {
+  const manifest = chrome.runtime.getManifest();
+  const localVersion = manifest.version;
+  const versionInfo = document.getElementById("version-info");
+
+  versionInfo.textContent = `v${localVersion}`;
+
+  try {
+    const response = await fetch(
+      "https://raw.githubusercontent.com/xnl-h4ck3r/XnlReveal/main/chrome/manifest.json"
+    );
+    const remoteManifest = await response.json();
+    const remoteVersion = remoteManifest.version;
+
+    if (localVersion !== remoteVersion) {
+      versionInfo.innerHTML = `<a href="https://github.com/xnl-h4ck3r/XnlReveal/releases" target="_blank" title="Update available">v${localVersion} (outdated)</a>`;
+    }
+  } catch (error) {
+    console.log(
+      "%c🤘Xnl Reveal%c Could not check for updates:",
+      "color: #00ff00; font-weight: bold",
+      "color: inherit",
+      error
+    );
+  }
+}
+
+checkVersion();
+
 // Load the current enabled state from storage
 chrome.storage.sync.get(["extensionDisabled"], (result) => {
   const extensionDisabled = result.extensionDisabled || "true";
@@ -34,7 +64,8 @@ chrome.storage.sync.get(["disabledDisabled"], (result) => {
 // Toggle the extension's show reflections state when the checkbox is changed
 enableReflectionsButton.addEventListener("click", () => {
   // Get the current value of the aria-checked attribute
-  const reflectionsDisabled = enableReflectionsButton.getAttribute("aria-checked");
+  const reflectionsDisabled =
+    enableReflectionsButton.getAttribute("aria-checked");
 
   // Toggle the value (if "true", change it to "false"; if "false", change it to "true")
   const newValue = reflectionsDisabled === "true" ? "false" : "true";

@@ -1136,3 +1136,30 @@ form > label {
 main.popup-main fieldset {
     padding-bottom: 0;
 }
+
+.footer-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5em;
+    font-size: 1rem;
+    color: #666;
+    padding-top: 0.5em;
+    border-top: 1px solid #ccc;
+}
+
+.footer-info a {
+    color: #666;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+}
+
+.footer-info a:hover {
+    color: #30d935;
+}
+
+.footer-info svg {
+    vertical-align: middle;
+}
+

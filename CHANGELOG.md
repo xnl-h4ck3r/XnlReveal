@@ -1,5 +1,11 @@
 ## Changelog
 
+- v4.2
+
+  - New
+
+    - Add a footer to the popup page giving a link to my Github page, show the version number (and show if outdated and link to download page if it is), and a link to my my Ko-fi page.
+
 - v4.1
 
   - New
