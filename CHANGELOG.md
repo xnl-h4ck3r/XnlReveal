@@ -19,7 +19,6 @@
     - Fixed "Extension context invalidated" errors in DevTools panel. Added proper error handling for when the extension is reloaded while the DevTools panel is open, preventing uncaught errors from the polling interval.
     - Fixed issue where rapid navigation would cause Wayback requests to be silently dropped. The root cause was that content scripts are reloaded on navigation, losing any pending callbacks. Moved the Wayback request queue to the background script where it persists across page navigations, ensuring all requests are processed sequentially. When navigation aborts a pending request, the error is logged directly to DevTools storage so users can see what happened.
     - Improved console message formatting.
-    - Improved parameter reflection status bar message. Added progress indicator showing current/total (e.g., "3/5") so users can see exactly how many parameters have been checked and how many remain.
 
 - v4.0
 
